@@ -15,7 +15,42 @@
         </p>
         <input v-model="realName" type="text" placeholder="이름" />
         <label class="field-label">생년월일</label>
-        <input v-model="birthDate" type="date" />
+
+        <div class="birth-select">
+        <select v-model="birthYear">
+            <option disabled value="">연도</option>
+            <option
+            v-for="year in years"
+            :key="year"
+            :value="year"
+            >
+            {{ year }}
+            </option>
+        </select>
+
+        <select v-model="birthMonth">
+            <option disabled value="">월</option>
+            <option
+            v-for="month in 12"
+            :key="month"
+            :value="month"
+            >
+            {{ month }}
+            </option>
+        </select>
+
+        <select v-model="birthDay">
+            <option disabled value="">일</option>
+            <option
+            v-for="day in daysInMonth"
+            :key="day"
+            :value="day"
+            >
+            {{ day }}
+            </option>
+        </select>
+        </div>
+
 
         <select v-model="region">
           <option disabled value="">지역 선택</option>
@@ -77,10 +112,28 @@ const username = ref('')
 const password = ref('')
 const passwordConfirm = ref('')
 const realName = ref('')
-const birthDate = ref('')
+const birthYear = ref('')
+const birthMonth = ref('')
+const birthDay = ref('')
 const region = ref('')
 const job = ref('')
 const gender = ref('')
+
+const currentYear = new Date().getFullYear()
+const years = Array.from(
+  { length: currentYear - 1949 },
+  (_, i) => currentYear - i
+)
+
+const daysInMonth = computed(() => {
+  if (!birthYear.value || !birthMonth.value) return []
+
+  return new Date(
+    birthYear.value,
+    birthMonth.value,
+    0
+  ).getDate()
+})
 
 const isValid = computed(() => {
   return (
@@ -89,7 +142,9 @@ const isValid = computed(() => {
     passwordConfirm.value &&
     password.value === passwordConfirm.value &&
     realName.value &&
-    birthDate.value &&
+    birthYear.value &&
+    birthMonth.value &&
+    birthDay.value &&
     region.value &&
     job.value &&
     gender.value
@@ -97,20 +152,24 @@ const isValid = computed(() => {
 })
 
 
+
 const submitSignup = () => {
+  const birthDate = `${birthYear.value}-${String(birthMonth.value).padStart(2, '0')}-${String(birthDay.value).padStart(2, '0')}`
+
   const age =
     new Date().getFullYear() -
     new Date(birthDate.value).getFullYear()
 
   auth.signup({
     username: username.value,
+    password: password.value,
     real_name: realName.value,
-    birth_date: birthDate.value,
-    age,
+    birth_date: birthDate,
     region: region.value,
     job: job.value,
     gender: gender.value
   })
+
 
   router.push('/')
 }
@@ -210,6 +269,16 @@ const goLogin = () => {
   font-size: 12px;
   color: #ef4444;
   margin-bottom: 8px;
+}
+
+.birth-select {
+  display: flex;
+  gap: 12px;
+  margin-bottom: 12px;
+}
+
+.birth-select select {
+  flex: 1;
 }
 
 
