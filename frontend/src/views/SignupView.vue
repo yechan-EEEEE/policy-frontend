@@ -8,6 +8,11 @@
         <h1>회원가입</h1>
 
         <input v-model="username" type="text" placeholder="아이디" />
+        <input v-model="password" type="password" placeholder="비밀번호" />
+        <input v-model="passwordConfirm" type="password" placeholder="비밀번호 확인" />
+        <p v-if="password && passwordConfirm && password !== passwordConfirm" class="error-text">
+        비밀번호가 일치하지 않습니다.
+        </p>
         <input v-model="realName" type="text" placeholder="이름" />
         <label class="field-label">생년월일</label>
         <input v-model="birthDate" type="date" />
@@ -69,6 +74,8 @@ const router = useRouter()
 const auth = useAuthStore()
 
 const username = ref('')
+const password = ref('')
+const passwordConfirm = ref('')
 const realName = ref('')
 const birthDate = ref('')
 const region = ref('')
@@ -78,6 +85,9 @@ const gender = ref('')
 const isValid = computed(() => {
   return (
     username.value &&
+    password.value &&
+    passwordConfirm.value &&
+    password.value === passwordConfirm.value &&
     realName.value &&
     birthDate.value &&
     region.value &&
@@ -85,6 +95,7 @@ const isValid = computed(() => {
     gender.value
   )
 })
+
 
 const submitSignup = () => {
   const age =
@@ -194,6 +205,13 @@ const goLogin = () => {
   color: #6b7280;
   margin-bottom: 6px;
 }
+
+.error-text {
+  font-size: 12px;
+  color: #ef4444;
+  margin-bottom: 8px;
+}
+
 
 /* RIGHT */
 .ad-box {
