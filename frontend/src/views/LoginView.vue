@@ -4,30 +4,30 @@
   <main class="login-page">
     <div class="login-container">
       <!-- LEFT: LOGIN FORM -->
-      <section class="login-box">
+      <form class="login-box" @submit.prevent="submitLogin">
         <h1>로그인</h1>
 
         <input
-          type="text"
-          placeholder="아이디"
-          v-model="username"
+            v-model="username"
+            type="text"
+            placeholder="아이디"
         />
 
         <input
-          type="password"
-          placeholder="비밀번호"
-          v-model="password"
+            v-model="password"
+            type="password"
+            placeholder="비밀번호"
         />
 
-        <button class="login-btn" @click="submitLogin">
-          로그인
+        <button type="submit" class="login-btn">
+            로그인
         </button>
 
         <p class="signup-link">
-          계정이 없나요?
-          <span @click="goSignup">회원가입</span>
+            계정이 없나요?
+            <span @click="goSignup">회원가입</span>
         </p>
-      </section>
+      </form>
 
       <!-- RIGHT: AD -->
       <section class="ad-box">
