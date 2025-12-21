@@ -28,11 +28,18 @@ class User(AbstractUser):
         ('제주특별자치도', '제주특별자치도'),
     ]
 
-    real_name = models.CharField(max_length=50, verbose_name="이름")
-    birth_date = models.DateField(verbose_name="생년월일")
-    region = models.CharField(max_length=20, choices=REGION_CHOICES, verbose_name="지역")
-    job = models.CharField(max_length=50, verbose_name="직업")
-    gender = models.CharField(max_length=1, choices=GENDER_CHOICES, verbose_name="성별")
+    real_name = models.CharField(max_length=50, blank=True,verbose_name="이름")
+    birth_date = models.DateField(null=True, blank=True,verbose_name="생년월일")
+    region = models.CharField(max_length=20, choices=REGION_CHOICES, null=True, blank=True,verbose_name="지역")
+    job = models.CharField(max_length=50, null=True, blank=True,verbose_name="직업")
+    gender = models.CharField(max_length=1, null=True, blank=True, choices=GENDER_CHOICES, verbose_name="성별")
+    
+    profile_image = models.ImageField(
+        upload_to='profiles/',
+        blank=True,
+        null=True,
+        verbose_name='프로필 이미지'
+    )
     
     def __str__(self):
         return self.username

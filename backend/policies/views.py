@@ -7,6 +7,7 @@ from .models import Policy
 from .serializers import PolicySerializer, PolicyListSerializer, PolicyDetailSerializer
 import requests
 from django.conf import settings
+from django.db import models
 from datetime import datetime
 # Create your views here.
 
@@ -74,9 +75,76 @@ def policy_recommend(request):
         sprtTrgtMaxAge__gte=user_age
     )
     
-    # policies = policies.annotate(
-    #     like_count=models.Count('liked_users')
-    # ).order_by('-like_count')[:10]
+    policies = policies.annotate(
+        like_count=models.Count('liked_users')
+    ).order_by('-like_count')[:10]
     
     serializer = PolicyListSerializer(policies, many=True)
     return Response(serializer.data)
+
+@api_view(['POST'])
+@permission_classes([AllowAny])
+def fetch_policies(request):
+    api_key = settings.YOUTH_API_KEY
+    base_url = 'https://www.youthcenter.go.kr/go/ythip/getPlcy'
+    
+    page_num = 1
+    page_size = 100  # 한 번에 100개씩
+    total_saved = 0
+    
+    try:
+        while True:
+            params = {
+                'apiKeyNm': api_key,
+                'pageNum': page_num,
+                'pageSize': page_size,
+                'rtnType': 'json'
+            }
+            
+            response = requests.get(base_url, params=params)
+            data = response.json()
+            
+            if data.get('resultCode') != 200:
+                break
+            
+            policy_list = data.get('result', {}).get('youthPolicyList', [])
+            
+            if not policy_list:
+                break
+            
+            # 데이터 저장
+            for policy_data in policy_list:
+                Policy.objects.update_or_create(
+                    plcyNo=policy_data['plcyNo'],
+                    defaults={
+                        'plcyNm': policy_data.get('plcyNm', ''),
+                        'plcyExplnCn': policy_data.get('plcyExplnCn', ''),
+                        'lclsfNm': policy_data.get('lclsfNm', ''),
+                        'mclsfNm': policy_data.get('mclsfNm', ''),
+                        'plcyKywdNm': policy_data.get('plcyKywdNm', ''),
+                        'plcySprtCn': policy_data.get('plcySprtCn', ''),
+                        'sprvsnInstCdNm': policy_data.get('sprvsnInstCdNm', ''),
+                        'sprtTrgtMinAge': int(policy_data.get('sprtTrgtMinAge', 0)),
+                        'sprtTrgtMaxAge': int(policy_data.get('sprtTrgtMaxAge', 0)),
+                        'bizPrdBgngYmd': policy_data.get('bizPrdBgngYmd', ''),
+                        'bizPrdEndYmd': policy_data.get('bizPrdEndYmd', ''),
+                        'jobCd': policy_data.get('jobCd', ''),
+                        'schoolCd': policy_data.get('schoolCd', ''),
+                        'aplyUrlAddr': policy_data.get('aplyUrlAddr', ''),
+                        'refUrlAddr1': policy_data.get('refUrlAddr1', ''),
+                    }
+                )
+                total_saved += 1
+            
+            page_num += 1
+        
+        return Response(
+            {'message': f'{total_saved}개의 정책 데이터를 저장했습니다.'},
+            status=status.HTTP_200_OK
+        )
+    
+    except Exception as e:
+        return Response(
+            {'error': str(e)},
+            status=status.HTTP_500_INTERNAL_SERVER_ERROR
+        )
