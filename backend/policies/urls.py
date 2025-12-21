@@ -9,4 +9,5 @@ urlpatterns = [
     path('<str:plcyNo>/like/', views.policy_like, name='policy_like'),
     path('recommend/ai/', views.policy_recommend, name='policy_recommend'),
     path('fetch/data/', views.fetch_policies, name='fetch_policies'),
+    path('<str:plcyNo>/summarize/', views.policy_summarize, name='policy_summarize'),
 ]

@@ -6,6 +6,7 @@ from rest_framework.permissions import IsAuthenticated, AllowAny
 from .models import Policy
 from .serializers import PolicySerializer, PolicyListSerializer, PolicyDetailSerializer
 import requests
+import google.generativeai as genai
 from django.conf import settings
 from django.db import models
 from datetime import datetime
@@ -146,5 +147,47 @@ def fetch_policies(request):
     except Exception as e:
         return Response(
             {'error': str(e)},
+            status=status.HTTP_500_INTERNAL_SERVER_ERROR
+        )
+        
+@api_view(['POST'])
+@permission_classes([AllowAny])
+def policy_summarize(request, plcyNo):
+    policy = get_object_or_404(Policy, plcyNo=plcyNo)
+    
+    try:
+        genai.configure(api_key=settings.GEMINI_API_KEY)
+        model = genai.GenerativeModel('gemini-2.5-flash')
+        
+        prompt = f"""
+            다음 청년 정책을 3-5줄로 요약해주세요. 반드시 아래 형식을 따라주세요:
+
+            **정책명**: {policy.plcyNm}
+
+            **지원 내용**:
+            {policy.plcySprtCn}
+
+            **상세 설명**:
+            {policy.plcyExplnCn}
+
+            요약 시 다음 내용을 포함해주세요:
+            1. 핵심 지원 내용 (한 줄)
+            2. 신청 자격 요건 (한 줄)  
+            3. 주요 혜택 (한 줄)
+
+            간단명료하게 작성해주세요.
+        """
+        response = model.generate_content(prompt)
+        summary = response.text
+        
+        return Response({
+            'plcyNo': plcyNo,
+            'plcyNm': policy.plcyNm,
+            'summary': summary
+        }, status=status.HTTP_200_OK)
+        
+    except Exception as e:
+        return Response(
+            {'error': f'요약 생성 중 오류가 발생했습니다: {str(e)}'},
             status=status.HTTP_500_INTERNAL_SERVER_ERROR
         )
