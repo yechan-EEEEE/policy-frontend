@@ -190,3 +190,23 @@
 1. 로그인 후 Cookie로 세션 유지
 2. 모든 날짜는 ISO 8601 형식
 3. 에러 응답은 JSON 형태로 제공
+
+# Backend API 배포 완료! 
+
+## API Base URL
+http://43.201.38.152
+
+## 설정 필요사항
+Vue 프로젝트에서:
+- API_BASE_URL = 'http://43.201.38.152/api'
+
+## API 문서
+API_DOCS.md 참고
+
+## CORS
+- 현재: localhost:5173 허용됨
+- Frontend 배포 URL 나오면 알려줘! (CORS 추가해줄게)
+
+## 테스트 계정
+- Username: admin
+- Password: (직접 전달)
