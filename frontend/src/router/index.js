@@ -26,7 +26,7 @@ const router = createRouter({
         { path: '/mypage', name: 'mypage', component: MyPageView},
 
         { path: '/threads', name: 'threads', component: ThreadsListView},
-        { path: '/threads/:policyid/write', name: 'threadWrite', component: ThreadWriteView},
+        { path: '/threads/:policyId/write', name: 'threadWrite', component: ThreadWriteView},
         { path: '/threads/:threadId', name: 'threadDetail', component: ThreadDetailView},
         { path: '/threads/:threadId/edit', name: 'threadEdit', component: ThreadEditView},
 
