@@ -1,5 +1,7 @@
 <template>
-  <router-view />
+    <div>
+        <h1>Policy Detail</h1>
+    </div>
 </template>
 
 <script setup>

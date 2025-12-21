@@ -1,5 +1,7 @@
 <template>
-  <router-view />
+    <div>
+        <h1>Threads List</h1>
+    </div>
 </template>
 
 <script setup>
