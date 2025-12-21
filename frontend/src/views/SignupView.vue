@@ -158,13 +158,15 @@ const submitSignup = () => {
 
   const age =
     new Date().getFullYear() -
-    new Date(birthDate.value).getFullYear()
+    new Date(birthDate).getFullYear()
+
 
   auth.signup({
     username: username.value,
     password: password.value,
     real_name: realName.value,
     birth_date: birthDate,
+    age,
     region: region.value,
     job: job.value,
     gender: gender.value

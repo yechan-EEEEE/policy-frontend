@@ -7,6 +7,7 @@ import PolicyDetailView from '@/views/PolicyDetailView.vue'
 import SignupView from '@/views/SignupView.vue'
 import LoginView from '@/views/LoginView.vue'
 import MyPageView from '@/views/MyPageView.vue'
+import MyPageEditView from '@/views/MyPageEditView.vue'
 
 import ThreadsListView from '@/views/ThreadsListView.vue'
 import ThreadWriteView from '@/views/ThreadWriteView.vue'
@@ -24,6 +25,7 @@ const router = createRouter({
         { path: '/signup', name: 'signup', component: SignupView},
         { path: '/login', name: 'login', component: LoginView},
         { path: '/mypage', name: 'mypage', component: MyPageView},
+        { path: '/mypage/edit', name: 'mypageEdit', component: MyPageEditView},
 
         { path: '/threads', name: 'threads', component: ThreadsListView},
         { path: '/threads/:policyId/write', name: 'threadWrite', component: ThreadWriteView},

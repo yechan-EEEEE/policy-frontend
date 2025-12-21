@@ -57,7 +57,9 @@ const submitLogin = () => {
     user: {
       username: username.value,
       age: 27,
-      region: '경기도'
+      region: '경기도',
+      job: '취업준비생',
+      gender: 'M'
     },
     token: 'mock-token'
   })
