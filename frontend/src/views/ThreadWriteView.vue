@@ -46,50 +46,54 @@
           />
         </div>
 
-        <button class="submit-btn">작성하기</button>
+        <button
+          class="primary"
+          :disabled="loading"
+          @click="submit"
+        >
+          {{ loading ? '작성 중...' : '등록하기' }}
+        </button>
+
       </form>
     </section>
   </main>
 </template>
 
 <script setup>
-import { ref, computed, onMounted } from 'vue'
-import { useRouter, useRoute } from 'vue-router'
+import { ref } from 'vue'
+import { useRoute, useRouter } from 'vue-router'
 import { useThreadStore } from '@/stores/thread'
-import { usePolicyStore } from '@/stores/policy'
 import AppNavbar from '@/components/common/AppNavbar.vue'
 
-const router = useRouter()
 const route = useRoute()
+const router = useRouter()
 const threadStore = useThreadStore()
-const policyStore = usePolicyStore()
 
 const title = ref('')
 const content = ref('')
-const selectedPolicyPk = ref('')
+const loading = ref(false)
 
-onMounted(() => {
-  policyStore.loadPolicies()
-  selectedPolicyPk.value = route.params.policyId
-})
+const submit = async () => {
+  if (!title.value || !content.value) return
 
-const policies = computed(() => policyStore.policies)
+  loading.value = true
+  try {
+    await threadStore.createThread({
+      title: title.value,
+      content: content.value,
+      policy: route.params.policyId, // === plcyNo
+    })
 
-const selectedPolicy = computed(() => {
-  return policyStore.getById(selectedPolicyPk.value)
-})
-
-const submitThread = async () => {
-  await threadStore.createThread({
-    title: title.value,
-    content: content.value,
-    policy: selectedPolicyPk.value,
-  })
-
-  // ✅ 작성 후 목록으로 이동
-  router.push('/threads')
+    // 작성 후 정책별 thread 목록으로 이동
+    router.push(`/threads?policyId=${route.params.policyId}`)
+  } catch (err) {
+    alert('글 작성에 실패했습니다.')
+  } finally {
+    loading.value = false
+  }
 }
 </script>
+
 
 <style scoped>
 .thread-write-page {
