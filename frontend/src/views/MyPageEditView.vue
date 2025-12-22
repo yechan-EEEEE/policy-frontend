@@ -3,200 +3,177 @@
 
   <main class="edit-page">
     <div class="edit-container">
-      <section class="edit-box">
+      <section class="edit-box" v-if="auth.user">
         <h1>정보 수정</h1>
 
+        <!-- 아이디 (수정 불가) -->
         <div class="form-group">
-            <label>아이디</label>
-            <input v-model="username" disabled />
+          <label>아이디</label>
+          <input :value="auth.user.username" disabled />
         </div>
 
+        <!-- 이름 -->
         <div class="form-group">
-            <label>비밀번호 변경</label>
-            <input
-            v-model="password"
-            type="password"
-            placeholder="새 비밀번호 (변경 시 입력)"
-            />
-            <input
-            v-model="passwordConfirm"
-            type="password"
-            placeholder="비밀번호 확인"
-            />
+          <label>이름</label>
+          <input v-model="form.real_name" />
         </div>
 
+        <!-- 생년월일 -->
         <div class="form-group">
-            <label>이름</label>
-            <input v-model="realName" />
+          <label>생년월일</label>
+          <div class="birth-select">
+            <select v-model="birthYear">
+              <option disabled value="">연도</option>
+              <option v-for="y in years" :key="y" :value="y">{{ y }}</option>
+            </select>
+
+            <select v-model="birthMonth">
+              <option disabled value="">월</option>
+              <option v-for="m in 12" :key="m" :value="m">{{ m }}</option>
+            </select>
+
+            <select v-model="birthDay">
+              <option disabled value="">일</option>
+              <option v-for="d in daysInMonth" :key="d" :value="d">{{ d }}</option>
+            </select>
+          </div>
         </div>
 
+        <!-- 지역 -->
         <div class="form-group">
-            <label>생년월일</label>
-            <div class="birth-select">
-        <select v-model="birthYear">
-            <option disabled value="">연도</option>
-            <option
-            v-for="year in years"
-            :key="year"
-            :value="year"
-            >
-            {{ year }}
-            </option>
-        </select>
-
-        <select v-model="birthMonth">
-            <option disabled value="">월</option>
-            <option
-            v-for="month in 12"
-            :key="month"
-            :value="month"
-            >
-            {{ month }}
-            </option>
-        </select>
-
-        <select v-model="birthDay">
-            <option disabled value="">일</option>
-            <option
-            v-for="day in daysInMonth"
-            :key="day"
-            :value="day"
-            >
-            {{ day }}
-            </option>
-        </select>
-        </div>
+          <label>지역</label>
+          <select v-model="form.region">
+            <option disabled value="">지역 선택</option>
+            <option value="서울">서울</option>
+            <option value="경기">경기</option>
+            <option value="인천">인천</option>
+            <option value="부산">부산</option>
+          </select>
         </div>
 
+        <!-- 직업 -->
         <div class="form-group">
-            <label>지역</label>
-            <select v-model="region">
-          <option disabled value="">지역 선택</option>
-          <option value="서울">서울</option>
-          <option value="경기">경기</option>
-          <option value="인천">인천</option>
-          <option value="부산">부산</option>
-        </select>
+          <label>직업</label>
+          <select v-model="form.job">
+            <option disabled value="">직업 선택</option>
+            <option value="학생">학생</option>
+            <option value="취업준비생">취업준비생</option>
+            <option value="직장인">직장인</option>
+            <option value="자영업자">자영업자</option>
+            <option value="프리랜서">프리랜서</option>
+            <option value="기타">기타</option>
+          </select>
         </div>
 
+        <!-- 성별 -->
         <div class="form-group">
-            <label>직업</label>
-            <select v-model="job">
-        <option disabled value="">직업 선택</option>
-        <option value="학생">학생</option>
-        <option value="취업준비생">취업준비생</option>
-        <option value="직장인">직장인</option>
-        <option value="자영업자">자영업자</option>
-        <option value="프리랜서">프리랜서</option>
-        <option value="기타">기타</option>
-        </select>
-        </div>
-
-        <div class="form-group">
-            <label>성별</label>
-            <select v-model="gender">
-          <option disabled value="">성별 선택</option>
-          <option value="M">남성</option>
-          <option value="F">여성</option>
-        </select>
+          <label>성별</label>
+          <select v-model="form.gender">
+            <option disabled value="">성별 선택</option>
+            <option value="M">남성</option>
+            <option value="F">여성</option>
+          </select>
         </div>
 
         <button
-            class="save-btn"
-            :disabled="!isValid"
-            @click="submitEdit"
+          class="save-btn"
+          :disabled="loading"
+          @click="submit"
         >
-            저장
+          {{ loading ? '저장 중...' : '저장' }}
         </button>
-        </section>
+      </section>
 
+      <div v-else class="loading">
+        사용자 정보를 불러오는 중입니다...
+      </div>
     </div>
   </main>
 </template>
 
-
 <script setup>
-import { ref, computed } from 'vue'
+import { ref, onMounted, computed } from 'vue'
 import { useRouter } from 'vue-router'
 import { useAuthStore } from '@/stores/auth'
+import api from '@/api/axios'
 import AppNavbar from '@/components/common/AppNavbar.vue'
 
 const router = useRouter()
 const auth = useAuthStore()
 
-// auth.user 방어
-const user = computed(() => auth.user || {})
+/* ===== 로컬 form state (serializer 기준) ===== */
+const form = ref({
+  real_name: '',
+  birth_date: '',
+  region: '',
+  job: '',
+  gender: '',
+})
 
-// 기본 정보
-const username = ref(user.value.username || '')
-const realName = ref(user.value.real_name || '')
-const region = ref(user.value.region || '')
-const job = ref(user.value.job || '')
-const gender = ref(user.value.gender || '')
+/* ===== 생년월일 분해용 ===== */
+const birthYear = ref('')
+const birthMonth = ref('')
+const birthDay = ref('')
 
-const password = ref('')
-const passwordConfirm = ref('')
+const loading = ref(false)
 
-// ⭐ 생년월일 안전 처리 (핵심)
-const birthDate = user.value.birth_date || '2000-01-01'
-const [y, m, d] = birthDate.split('-')
-
-const birthYear = ref(Number(y))
-const birthMonth = ref(Number(m))
-const birthDay = ref(Number(d))
-
-const currentYear = new Date().getFullYear()
-const years = Array.from({ length: currentYear - 1949 }, (_, i) => currentYear - i)
+/* ===== 연도/일 계산 ===== */
+const years = computed(() => {
+  const current = new Date().getFullYear()
+  return Array.from({ length: 80 }, (_, i) => current - i)
+})
 
 const daysInMonth = computed(() => {
   if (!birthYear.value || !birthMonth.value) return []
   return new Date(birthYear.value, birthMonth.value, 0).getDate()
 })
 
-const isValid = computed(() => {
-  if (password.value || passwordConfirm.value) {
-    if (password.value !== passwordConfirm.value) return false
-  }
+/* ===== 초기 값 세팅 ===== */
+onMounted(() => {
+  if (!auth.user) return
 
-  return (
-    realName.value &&
-    birthYear.value &&
-    birthMonth.value &&
-    birthDay.value &&
-    region.value &&
-    job.value &&
-    gender.value
-  )
+  form.value.real_name = auth.user.real_name || ''
+  form.value.region = auth.user.region || ''
+  form.value.job = auth.user.job || ''
+  form.value.gender = auth.user.gender || ''
+
+  if (auth.user.birth_date) {
+    const [y, m, d] = auth.user.birth_date.split('-')
+    birthYear.value = y
+    birthMonth.value = Number(m)
+    birthDay.value = Number(d)
+  }
 })
 
-const submitEdit = () => {
-  const birth_date =
-    `${birthYear.value}-${String(birthMonth.value).padStart(2, '0')}-${String(birthDay.value).padStart(2, '0')}`
+/* ===== 저장 ===== */
+const submit = async () => {
+  loading.value = true
+  try {
+    if (birthYear.value && birthMonth.value && birthDay.value) {
+      form.value.birth_date =
+        `${birthYear.value}-${String(birthMonth.value).padStart(2,'0')}-${String(birthDay.value).padStart(2,'0')}`
+    }
 
-  const age = new Date().getFullYear() - new Date(birth_date).getFullYear()
+    const res = await api.patch('/accounts/profile/', {
+      real_name: form.value.real_name,
+      birth_date: form.value.birth_date,
+      region: form.value.region,
+      job: form.value.job,
+      gender: form.value.gender,
+    })
 
-  auth.login({
-    user: {
-      ...user.value,
-      real_name: realName.value,
-      birth_date,
-      age,
-      region: region.value,
-      job: job.value,
-      gender: gender.value
-    },
-    token: auth.token
-  })
-
-  router.push('/mypage')
+    auth.user = res.data
+    router.push('/mypage')
+  } catch (e) {
+    alert('회원 정보 수정에 실패했습니다.')
+  } finally {
+    loading.value = false
+  }
 }
 </script>
 
-
-
 <style scoped>
 .edit-page {
-  width: 100%;
   min-height: calc(100vh - 64px);
   background: #f8fafc;
   display: flex;
@@ -210,7 +187,6 @@ const submitEdit = () => {
   padding: 0 20px;
 }
 
-/* 카드 느낌 */
 .edit-box {
   background: white;
   border: 1px solid #e5e7eb;
@@ -224,7 +200,6 @@ const submitEdit = () => {
   margin-bottom: 28px;
 }
 
-/* 폼 그룹 */
 .form-group {
   margin-bottom: 18px;
 }
@@ -245,17 +220,11 @@ const submitEdit = () => {
   font-size: 14px;
 }
 
-/* 생년월일 */
 .birth-select {
   display: flex;
   gap: 8px;
 }
 
-.birth-select select {
-  flex: 1;
-}
-
-/* 저장 버튼 */
 .save-btn {
   width: 100%;
   margin-top: 12px;
@@ -266,16 +235,9 @@ const submitEdit = () => {
   font-size: 15px;
   font-weight: 600;
   border: none;
-  cursor: pointer;
-}
-
-.save-btn:hover:not(:disabled) {
-  background: #1d4ed8;
 }
 
 .save-btn:disabled {
   background: #94a3b8;
-  cursor: not-allowed;
 }
-
 </style>
