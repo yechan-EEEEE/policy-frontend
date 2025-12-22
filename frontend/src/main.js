@@ -12,6 +12,6 @@ app.use(createPinia())
 app.use(router)
 
 const auth = useAuthStore()
-auth.loadAuth()
+auth.fetchUser()
 
 app.mount('#app')
