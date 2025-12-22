@@ -53,7 +53,6 @@
         </div>
       </div>
 
-
       <p v-if="recommendedPolicies.length === 0" class="empty-text">
         추천할 정책이 아직 없습니다.
       </p>
@@ -103,58 +102,58 @@ const policyStore = usePolicyStore()
 const threadStore = useThreadStore()
 
 onMounted(() => {
-  policyStore.loadPolicies()
-  threadStore.loadThreads()
+  if (!policyStore.policies.length) {
+    policyStore.fetchPolicies()
+  }
+
+  if (!threadStore.threads.length) {
+    threadStore.fetchThreads()
+  }
 })
 
-/**
- * ✅ 추천 정책 (로그인: 조건 맞는 정책 중 liked_users 많은 순 TOP 4)
- * ✅ 비로그인: 전체 정책 중 liked_users 많은 순 TOP 4
- */
-const recommendedPolicies = computed(() => {
-  let list = Array.isArray(policyStore.policies) ? [...policyStore.policies] : []
+const userAge = computed(() => {
+  if (!auth.user?.birth_date) return null
+  const birthYear = new Date(auth.user.birth_date).getFullYear()
+  return new Date().getFullYear() - birthYear + 1
+})
 
-  if (auth.isLogin && auth.user) {
-    const age = auth.user.age
+const recommendedPolicies = computed(() => {
+  let list = [...(policyStore.policies || [])]
+
+  if (auth.isLogin && userAge.value) {
     list = list.filter(p => {
-      if (p.sprtTrgtMinAge && age < p.sprtTrgtMinAge) return false
-      if (p.sprtTrgtMaxAge && age > p.sprtTrgtMaxAge) return false
+      if (p.sprtTrgtMinAge && userAge.value < p.sprtTrgtMinAge) return false
+      if (p.sprtTrgtMaxAge && userAge.value > p.sprtTrgtMaxAge) return false
       return true
     })
   }
 
-  list.sort((a, b) => (b.liked_users?.length || 0) - (a.liked_users?.length || 0))
+  list.sort(
+    (a, b) =>
+      (b.like_count ?? 0) - (a.like_count ?? 0)
+  )
+
   return list.slice(0, 4)
 })
 
-/**
- * ✅ 인기 게시글 (로그인/로그아웃 무관)
- * 기준: view_count + liked_users.length 높은 순 TOP 4
- */
 const recommendedThreads = computed(() => {
-  const list = Array.isArray(threadStore.threads) ? [...threadStore.threads] : []
+  const list = [...(threadStore.threads || [])]
 
   list.sort((a, b) => {
-    const scoreA = (a.view_count || 0) + (a.liked_users?.length || 0)
-    const scoreB = (b.view_count || 0) + (b.liked_users?.length || 0)
+    const scoreA = (a.view_count || 0) + (a.like_count || 0)
+    const scoreB = (b.view_count || 0) + (b.like_count || 0)
     return scoreB - scoreA
   })
 
   return list.slice(0, 4)
 })
 
-const goPolicyThreads = (policyPk) => {
-  router.push({
-    path: '/threads',
-    query: { policyId: policyPk }
-  })
-}
-
 const goPolicy = (pk) => router.push(`/policies/${pk}`)
 const goPolicies = () => router.push('/policies')
 const goThread = (id) => router.push(`/threads/${id}`)
 const goThreads = () => router.push('/threads')
 </script>
+
 
 <style scoped>
 .home {
