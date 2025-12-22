@@ -9,7 +9,14 @@
         <input v-model="title" />
         <textarea v-model="content" />
 
-        <button>수정 완료</button>
+        <button
+          class="primary"
+          :disabled="loading"
+          @click="submit"
+        >
+          {{ loading ? '수정 중...' : '수정 완료' }}
+        </button>
+
       </form>
     </section>
   </main>
@@ -19,29 +26,50 @@
 import { ref, onMounted } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 import { useThreadStore } from '@/stores/thread'
+import { useAuthStore } from '@/stores/auth'
 import AppNavbar from '@/components/common/AppNavbar.vue'
 
 const route = useRoute()
 const router = useRouter()
-const store = useThreadStore()
-
-const id = route.params.id
+const threadStore = useThreadStore()
+const auth = useAuthStore()
 
 const title = ref('')
 const content = ref('')
-const thread = ref(null)
+const loading = ref(false)
 
 onMounted(async () => {
-  thread.value = await store.fetchThread(id)
-  title.value = thread.value.title
-  content.value = thread.value.content
+  await threadStore.fetchThreadDetail(route.params.threadId)
+
+  const thread = threadStore.threadDetail
+  if (!thread) return
+
+  // 본인 글 아니면 접근 차단 (UI 레벨)
+  if (auth.user?.id !== thread.author?.id) {
+    alert('수정 권한이 없습니다.')
+    router.back()
+    return
+  }
+
+  title.value = thread.title
+  content.value = thread.content
 })
 
 const submit = async () => {
-  await store.updateThread(id, {
-    title: title.value,
-    content: content.value,
-  })
-  router.push(`/threads/${id}`)
+  if (!title.value || !content.value) return
+
+  loading.value = true
+  try {
+    await threadStore.updateThread(route.params.threadId, {
+      title: title.value,
+      content: content.value,
+    })
+
+    router.push(`/threads/${route.params.threadId}`)
+  } catch (err) {
+    alert('수정에 실패했습니다.')
+  } finally {
+    loading.value = false
+  }
 }
 </script>
