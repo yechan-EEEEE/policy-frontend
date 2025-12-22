@@ -105,14 +105,14 @@
       <div class="card-list">
         <div
           v-for="policy in pagedPolicies"
-          :key="policy.pk"
+          :key="policy.plcyNo"
           class="policy-card"
-          @click="goDetail(policy.pk)"
+          @click="goDetail(policy.plcyNo)"
         >
-          <h3 class="card-title">{{ policy.title }}</h3>
-          <p class="card-desc">{{ policy.description }}</p>
+          <h3 class="card-title">{{ policy.plcyNm }}</h3>
+          <p class="card-desc">{{ policy.plcyExplnCn }}</p>
           <span class="card-meta">
-            {{ policy.category }} / {{ policy.subTitle }}
+            {{ policy.lclsfNm }} / {{ policy.mclsfNm }}
           </span>
         </div>
 
@@ -179,52 +179,46 @@ watch(
 )
 
 onMounted(() => {
-  if (!policyStore.policies.length) {
-    policyStore.loadPolicies()
-  }
+  policyStore.fetchPolicies()
 })
+
 
 const policies = computed(() => policyStore.policies)
 
 // 대분류
 const mainCategories = computed(() => {
-  const set = new Set()
-  policies.value.forEach(p => set.add(p.category))
-  return [...set]
+  return [...new Set(policies.value.map(p => p.lclsfNm).filter(Boolean))]
 })
 
 // 소분류
 const subCategories = computed(() => {
   if (!selectedCategory.value) return []
-  const set = new Set()
-  policies.value.forEach(p => {
-    if (p.category === selectedCategory.value) {
-      set.add(p.subTitle)
-    }
-  })
-  return [...set]
+  return [
+    ...new Set(
+      policies.value
+        .filter(p => p.lclsfNm === selectedCategory.value)
+        .map(p => p.mclsfNm)
+        .filter(Boolean)
+    ),
+  ]
 })
 
 // 필터링
 const filteredPolicies = computed(() => {
   return policies.value.filter(p => {
-    if (selectedCategory.value && p.category !== selectedCategory.value) {
+    if (selectedCategory.value && p.lclsfNm !== selectedCategory.value) {
       return false
     }
 
-    if (selectedSubCategory.value && p.subTitle !== selectedSubCategory.value) {
+    if (selectedSubCategory.value && p.mclsfNm !== selectedSubCategory.value) {
       return false
     }
 
     if (
       keyword.value &&
-      !p.title.includes(keyword.value) &&
-      !p.description.includes(keyword.value)
+      !p.plcyNm.includes(keyword.value) &&
+      !p.plcyExplnCn.includes(keyword.value)
     ) {
-      return false
-    }
-
-    if (hideExpired.value && isExpired(p.aplyYmd)) {
       return false
     }
 
@@ -232,6 +226,7 @@ const filteredPolicies = computed(() => {
       const age = auth.user.age
       const min = Number(p.sprtTrgtMinAge)
       const max = Number(p.sprtTrgtMaxAge)
+
       if ((min && age < min) || (max && age > max)) {
         return false
       }
@@ -240,6 +235,7 @@ const filteredPolicies = computed(() => {
     return true
   })
 })
+
 
 const toggleMatched = () => {
   if (!auth.isLogin) return
@@ -251,26 +247,26 @@ const selectCategory = (cat) => {
   selectedSubCategory.value = ''
 }
 
-const goDetail = (pk) => {
-  router.push(`/policies/${pk}`)
+const goDetail = (plcyNo) => {
+  router.push(`/policies/${plcyNo}`)
 }
 
-const isExpired = (aplyYmd) => {
-  if (!aplyYmd) return false
-  const parts = aplyYmd.split('~')
-  if (parts.length !== 2) return false
+// const isExpired = (aplyYmd) => {
+//   if (!aplyYmd) return false
+//   const parts = aplyYmd.split('~')
+//   if (parts.length !== 2) return false
 
-  const end = parts[1].trim()
-  const endDate = new Date(
-    end.slice(0, 4),
-    Number(end.slice(4, 6)) - 1,
-    end.slice(6, 8)
-  )
+//   const end = parts[1].trim()
+//   const endDate = new Date(
+//     end.slice(0, 4),
+//     Number(end.slice(4, 6)) - 1,
+//     end.slice(6, 8)
+//   )
 
-  const today = new Date()
-  today.setHours(0, 0, 0, 0)
-  return endDate < today
-}
+//   const today = new Date()
+//   today.setHours(0, 0, 0, 0)
+//   return endDate < today
+// }
 
 const ITEMS_PER_PAGE = 10
 
