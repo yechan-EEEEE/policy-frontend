@@ -52,7 +52,12 @@ const username = ref('')
 const password = ref('')
 
 const submitLogin = () => {
-  // 🔥 Mock 로그인
+  if (!username.value.trim() || !password.value.trim()) {
+    alert('아이디와 비밀번호를 입력해주세요.')
+    return
+  }
+
+  // 🔥 Mock 로그인 (임시)
   auth.login({
     user: {
       username: username.value,
@@ -66,6 +71,7 @@ const submitLogin = () => {
 
   router.push('/')
 }
+
 
 const goSignup = () => {
   router.push('/signup')

@@ -104,7 +104,7 @@
       <!-- 정책 카드 -->
       <div class="card-list">
         <div
-          v-for="policy in filteredPolicies"
+          v-for="policy in pagedPolicies"
           :key="policy.pk"
           class="policy-card"
           @click="goDetail(policy.pk)"
@@ -123,18 +123,33 @@
           조건에 맞는 정책이 없습니다.
         </p>
       </div>
+
+      <!-- 페이지네이션 -->
+      <div class="pagination" v-if="totalPages > 1">
+        <button
+          v-for="page in totalPages"
+          :key="page"
+          :class="{ active: page === currentPage }"
+          @click="goPage(page)"
+        >
+          {{ page }}
+        </button>
+      </div>
+
     </section>
   </main>
 </template>
 
 <script setup>
 import { ref, computed, onMounted } from 'vue'
-import { useRouter } from 'vue-router'
+import { useRouter, useRoute } from 'vue-router'
 import { usePolicyStore } from '@/stores/policy'
 import { useAuthStore } from '@/stores/auth'
+import { watch } from 'vue'
 import AppNavbar from '@/components/common/AppNavbar.vue'
 
 const router = useRouter()
+const route = useRoute()
 const policyStore = usePolicyStore()
 const auth = useAuthStore()
 
@@ -143,6 +158,25 @@ const onlyMatched = ref(false)
 const hideExpired = ref(false)
 const selectedCategory = ref('')
 const selectedSubCategory = ref('')
+
+watch(
+  () => [
+    keyword.value,
+    selectedCategory.value,
+    selectedSubCategory.value,
+    hideExpired.value,
+    onlyMatched.value,
+  ],
+  () => {
+    router.push({
+      path: '/policies',
+      query: {
+        ...route.query,
+        page: 1,
+      },
+    })
+  }
+)
 
 onMounted(() => {
   if (!policyStore.policies.length) {
@@ -237,6 +271,33 @@ const isExpired = (aplyYmd) => {
   today.setHours(0, 0, 0, 0)
   return endDate < today
 }
+
+const ITEMS_PER_PAGE = 10
+
+const currentPage = computed(() => {
+  return Number(route.query.page) || 1
+})
+
+const totalPages = computed(() => {
+  return Math.ceil(filteredPolicies.value.length / ITEMS_PER_PAGE)
+})
+
+const pagedPolicies = computed(() => {
+  const start = (currentPage.value - 1) * ITEMS_PER_PAGE
+  const end = start + ITEMS_PER_PAGE
+  return filteredPolicies.value.slice(start, end)
+})
+
+const goPage = (page) => {
+  router.push({
+    path: '/policies',
+    query: {
+      ...route.query,
+      page,
+    },
+  })
+}
+
 </script>
 
 <style scoped>
@@ -350,11 +411,41 @@ hr {
 }
 
 .policy-card {
+  height: 180px;
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+
   border: 1px solid #e5e7eb;
   border-radius: 12px;
   padding: 20px;
-  cursor: pointer;
-  transition: all 0.2s ease;
+  background: #ffffff;
+}
+
+.policy-card h3 {
+  font-size: 16px;
+  font-weight: 700;
+
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.policy-card .card-desc {
+  font-size: 14px;
+  color: #4b5563;
+  line-height: 1.5;
+
+  display: -webkit-box;
+  -webkit-line-clamp: 2;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+}
+
+.policy-card .card-meta {
+  font-size: 13px;
+  color: #6b7280;
+  margin-top: auto;
 }
 
 .policy-card:hover {
@@ -384,4 +475,26 @@ hr {
   color: #6b7280;
   font-size: 14px;
 }
+
+.pagination {
+  margin-top: 32px;
+  display: flex;
+  justify-content: center;
+  gap: 8px;
+}
+
+.pagination button {
+  padding: 6px 12px;
+  border-radius: 6px;
+  border: 1px solid #d1d5db;
+  background: #f9fafb;
+  cursor: pointer;
+}
+
+.pagination button.active {
+  background: #2563eb;
+  color: white;
+  border-color: #2563eb;
+}
+
 </style>

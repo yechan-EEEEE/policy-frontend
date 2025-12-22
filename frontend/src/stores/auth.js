@@ -23,14 +23,19 @@ export const useAuthStore = defineStore('auth', {
     },
 
     login({ user, token }) {
-        this.user = user
-        this.token = token
-        this.isLogin = true
+    if (!user || !user.username) {
+        console.warn('로그인 실패: 유효하지 않은 사용자')
+        return
+    }
 
-        localStorage.setItem('auth', JSON.stringify({
+    this.user = user
+    this.token = token
+    this.isLogin = true
+
+    localStorage.setItem('auth', JSON.stringify({
         user,
         token
-        }))
+    }))
     },
 
     logout() {
@@ -41,13 +46,19 @@ export const useAuthStore = defineStore('auth', {
     },
 
     loadAuth() {
-        const saved = localStorage.getItem('auth')
-        if (saved) {
-        const { user, token } = JSON.parse(saved)
-        this.user = user
-        this.token = token
-        this.isLogin = true
-        }
+    const saved = localStorage.getItem('auth')
+    if (!saved) return
+
+    const { user, token } = JSON.parse(saved)
+
+    if (!user || !user.username) {
+        localStorage.removeItem('auth')
+        return
+    }
+
+    this.user = user
+    this.token = token
+    this.isLogin = true
     }
     }
 
