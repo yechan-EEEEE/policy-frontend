@@ -79,15 +79,19 @@
       <div class="card-list">
         <div
           v-for="thread in filteredThreads"
-          :key="thread.threadId"
+          :key="thread.id"
           class="thread-card"
-          @click="goDetail(thread.threadId)"
+          @click="goDetail(thread.id)"
         >
           <h3 class="card-title">{{ thread.title }}</h3>
           <p class="card-desc">{{ thread.content }}</p>
           <div class="card-meta">
-            <span>{{ thread.category }} / {{ thread.subCategory }}</span>
-            <span>👍 {{ thread.likes }} 좋아요</span>
+            <span>
+              {{ policyStore.getByPlcyNo(thread.policy)?.lclsfNm }}
+              /
+              {{ policyStore.getByPlcyNo(thread.policy)?.mclsfNm }}
+            </span>
+            <span>👍 {{ thread.like_count ?? 0 }}</span>
           </div>
         </div>
 
@@ -118,19 +122,22 @@ const onlyMatched = ref(false)
 const selectedCategory = ref('')
 const selectedSubCategory = ref('')
 
-onMounted(() => {
-  policyStore.loadPolicies()
-  threadStore.loadThreads()
+onMounted(async () => {
+  await policyStore.fetchPolicies()
+
+  // 정책 기준 목록 or 전체
+  if (route.query.policyId) {
+    await threadStore.fetchThreadsByPolicy(route.query.policyId)
+  } else {
+    await threadStore.fetchThreads()
+  }
 })
 
 const threads = computed(() => threadStore.threads)
 
-/* ✅ 대분류: 정책 기준 */
-const mainCategories = computed(() => {
-  return policyStore.categories
-})
+/* 대분류 / 소분류는 정책 기준 */
+const mainCategories = computed(() => policyStore.categories)
 
-/* ✅ 소분류: 정책 기준 */
 const subCategories = computed(() => {
   if (!selectedCategory.value) return []
   return policyStore.subCategories(selectedCategory.value)
@@ -139,16 +146,15 @@ const subCategories = computed(() => {
 /* 필터링 */
 const filteredThreads = computed(() => {
   return threads.value.filter(t => {
-    // ✅ 정책 기준 필터
-    if (route.query.policyId && String(t.policy?.pk) !== String(route.query.policyId)) {
+    const policy = policyStore.getByPlcyNo?.(t.policy) // policy === plcyNo
+
+    if (!policy) return false
+
+    if (selectedCategory.value && policy.lclsfNm !== selectedCategory.value) {
       return false
     }
 
-    if (selectedCategory.value && t.category !== selectedCategory.value) {
-      return false
-    }
-
-    if (selectedSubCategory.value && t.subCategory !== selectedSubCategory.value) {
+    if (selectedSubCategory.value && policy.mclsfNm !== selectedSubCategory.value) {
       return false
     }
 
@@ -164,7 +170,6 @@ const filteredThreads = computed(() => {
   })
 })
 
-
 const selectCategory = (cat) => {
   selectedCategory.value = cat
   selectedSubCategory.value = ''
@@ -178,6 +183,7 @@ const goDetail = (threadId) => {
   router.push(`/threads/${threadId}`)
 }
 </script>
+
 
 
 <style scoped>
