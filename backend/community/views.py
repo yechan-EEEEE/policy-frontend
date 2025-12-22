@@ -11,6 +11,7 @@ from .serializers import (
 )
 
 @api_view(['GET', 'POST'])
+@permission_classes([AllowAny])
 def post_list(request):
     if request.method == 'GET':
         posts = Post.objects.all()

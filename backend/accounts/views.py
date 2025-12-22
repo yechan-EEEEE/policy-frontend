@@ -5,7 +5,6 @@ from rest_framework.response import Response
 from rest_framework.permissions import IsAuthenticated, AllowAny
 from django.contrib.auth import login, logout, authenticate
 from django.contrib.auth import get_user_model
-from django.views.decorators.csrf import csrf_exempt
 from .serializers import UserSerializer, UserCreateSerializer, UserDetailSerializer
 # Create your views here.
 
@@ -22,7 +21,6 @@ def signup(request):
             status=status.HTTP_201_CREATED
         )
 
-@csrf_exempt
 @api_view(['POST'])
 @permission_classes([AllowAny])
 def user_login(request):
