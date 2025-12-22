@@ -6,7 +6,7 @@
       <h1>마이페이지</h1>
 
       <!-- 내 정보 카드 -->
-      <section class="info-card">
+      <section v-if="auth.user" class="info-card">
         <h2>내 정보</h2>
 
         <div class="info-row">
@@ -16,7 +16,7 @@
 
         <div class="info-row">
           <span class="label">나이</span>
-          <span class="value">{{ auth.user.age }}세</span>
+          <span class="value">{{ age }}세</span>
         </div>
 
         <div class="info-row">
@@ -29,6 +29,9 @@
           <span class="value">{{ auth.user.job }}</span>
         </div>
       </section>
+      <div v-else class="loading">
+        사용자 정보를 불러오는 중입니다...
+      </div>
 
       <!-- 하단 버튼 -->
       <div class="actions">
@@ -45,6 +48,8 @@
           회원 탈퇴
         </button>
       </div>
+
+      
     </div>
   </main>
 </template>
@@ -53,6 +58,15 @@
 import { useRouter } from 'vue-router'
 import { useAuthStore } from '@/stores/auth'
 import AppNavbar from '@/components/common/AppNavbar.vue'
+import { computed } from 'vue'
+
+const age = computed(() => {
+  if (!auth.user?.birth_date) return '-'
+
+  const birthYear = new Date(auth.user.birth_date).getFullYear()
+  const currentYear = new Date().getFullYear()
+  return currentYear - birthYear + 1
+})
 
 const router = useRouter()
 const auth = useAuthStore()
@@ -61,9 +75,9 @@ const goEdit = () => {
   router.push('/mypage/edit')
 }
 
-const logout = () => {
-  auth.logout()
-  router.push('/')
+const logout = async () => {
+  await auth.logout()
+  router.push('/login')
 }
 
 const withdraw = () => {
