@@ -6,9 +6,9 @@
 
       <!-- 제목 카드 -->
       <section class="card header-card">
-        <span class="badge">{{ policy.category }}</span>
-        <h1 class="title">{{ policy.title }}</h1>
-        <p class="desc">{{ policy.description }}</p>
+        <span class="badge">{{ policy.lclsfNm }}</span>
+        <h1 class="title">{{ policy.plcyNm }}</h1>
+        <p class="desc">{{ policy.plcyExplnCn }}</p>
       </section>
 
       <!-- 핵심 정보 -->
@@ -21,13 +21,15 @@
         </div>
 
         <div class="info-item">
-          <strong>신청 기간</strong>
-          <span>{{ policy.aplyYmd }}</span>
+          <strong>사업 기간</strong>
+          <span>
+            {{ policy.bizPrdBgngYmd }} ~ {{ policy.bizPrdEndYmd }}
+          </span>
         </div>
 
         <div class="info-item">
           <strong>주관 기관</strong>
-          <span>{{ policy.publisher || '정보 없음' }}</span>
+          <span>{{ policy.sprvsnInstCdNm || '정보 없음' }}</span>
         </div>
       </section>
 
@@ -77,19 +79,16 @@ const policyStore = usePolicyStore()
 const auth = useAuthStore()
 
 onMounted(() => {
-  if (!policyStore.policies.length) {
-    policyStore.loadPolicies()
-  }
+  policyStore.fetchPolicyDetail(route.params.policyId)
 })
 
-const policy = computed(() =>
-  policyStore.getById(route.params.policyId)
-)
+const policy = computed(() => policyStore.policyDetail)
 
 const goWrite = () => {
   router.push(`/threads/${route.params.policyId}/write`)
 }
 </script>
+
 
 <style scoped>
 .policy-detail-page {
