@@ -1,81 +1,65 @@
 import { defineStore } from 'pinia'
-import policiesData from '@/assets/data/edit_policies.json' 
-// ↑ 임시 mock 데이터 (나중에 API로 교체)
+import api from '@/api/axios'
 
 export const usePolicyStore = defineStore('policy', {
   state: () => ({
     policies: [],
+    policyDetail: null,
     isLoaded: false,
   }),
 
   getters: {
-    /**
-     * 정책 PK로 단일 정책 조회
-     */
-    getById: (state) => (policyId) => {
-      return state.policies.find(p => p.pk === policyId)
+    getByPlcyNo: (state) => (plcyNo) => {
+      return state.policies.find(p => p.plcyNo === plcyNo)
     },
 
-    /**
-     * 전체 대분류 목록 (중복 제거)
-     */
     categories: (state) => {
-      return [...new Set(state.policies.map(p => p.category))]
+      return [...new Set(state.policies.map(p => p.lclsfNm).filter(Boolean))]
     },
 
-    /**
-     * 특정 대분류에 해당하는 소분류 목록
-     */
     subCategories: (state) => (category) => {
       if (!category) return []
       return [
         ...new Set(
           state.policies
-            .filter(p => p.category === category)
-            .map(p => p.subTitle)
+            .filter(p => p.lclsfNm === category)
+            .map(p => p.mclsfNm)
+            .filter(Boolean)
         )
       ]
     },
   },
 
   actions: {
-    /**
-     * 정책 데이터 로드 (mock → API 교체 예정)
-     */
-    loadPolicies() {
-      if (this.isLoaded) return
-
-      this.policies = (policiesData || []).map(p => ({
-        pk: p.pk,
-        title: p.title,
-        description: p.description,
-        category: p.category,
-        subTitle: p.subTitle,
-
-        // 지원 내용
-        plcySprtCn: p.plcySprtCn,
-
-        // 연령 조건
-        sprtTrgtMinAge: Number(p.sprtTrgtMinAge) || null,
-        sprtTrgtMaxAge: Number(p.sprtTrgtMaxAge) || null,
-        sprtTrgtAgeLmtYn: p.sprtTrgtAgeLmtYn,
-
-        // 신청 기간
-        aplyYmd: p.aplyYmd,
-
-        // 기관
-        publisher: p.publisher,
-
-        // 게시 날짜
-        pub_date: p.pub_date,
-      }))
-
+    /** 정책 목록 조회 */
+    async fetchPolicies(params = {}) {
+      const res = await api.get('/policies/', { params })
+      this.policies = res.data
       this.isLoaded = true
     },
 
-    /**
-     * 🔮 (나중에 API 붙을 때)
-     * async fetchPolicies() {}
-     */
+    /** 정책 상세 조회 */
+    async fetchPolicyDetail(plcyNo) {
+      const res = await api.get(`/policies/${plcyNo}/`)
+      this.policyDetail = res.data
+    },
+
+    /** 정책 좋아요 */
+    async toggleLike(plcyNo) {
+      const res = await api.post(`/policies/${plcyNo}/like/`)
+      return res.data
+    },
+
+    /** 정책 추천 */
+    async fetchRecommendPolicies() {
+      const res = await api.get('/policies/recommend/')
+      return res.data
+    },
+
+    /** 정책 요약 (AI) */
+    async summarizePolicy(plcyNo) {
+      const res = await api.post(`/policies/${plcyNo}/summarize/`)
+      return res.data
+    },
   },
 })
