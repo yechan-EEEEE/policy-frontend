@@ -1,9 +1,10 @@
 import { defineStore } from 'pinia'
-import axios from 'axios'
+import api from '@/api/axios'
 
 export const useThreadStore = defineStore('thread', {
   state: () => ({
     threads: [],
+    threadDetail: null,
   }),
 
   getters: {
@@ -13,49 +14,44 @@ export const useThreadStore = defineStore('thread', {
   },
 
   actions: {
-    async loadThreads() {
-      const res = await axios.get('/api/threads/')
-
-      // 🔥 백엔드 데이터 → 프론트용으로 정규화
-      this.threads = Array.isArray(res.data)
-        ? res.data.map(t => ({
-            id: t.pk,
-            title: t.fields.title,
-            content: t.fields.content,
-            author: t.fields.author,
-            created_at: t.fields.created_at,
-            updated_at: t.fields.updated_at,
-            view_count: t.fields.view_count ?? 0,
-            liked_users: t.fields.liked_users ?? [],
-          }))
-        : []
+    /** 전체 스레드 목록 */
+    async fetchThreads(params = {}) {
+      const res = await api.get('/community/threads/', { params })
+      this.threads = res.data
     },
 
+    /** 특정 정책의 스레드 목록 */
+    async fetchThreadsByPolicy(plcyNo) {
+      const res = await api.get(`/community/policies/${plcyNo}/threads/`)
+      this.threads = res.data
+    },
+
+    /** 스레드 상세 */
+    async fetchThreadDetail(threadId) {
+      const res = await api.get(`/community/threads/${threadId}/`)
+      this.threadDetail = res.data
+    },
+
+    /** 스레드 생성 */
     async createThread(payload) {
       /**
        * payload: { title, content, policy }
+       * policy === plcyNo
        */
+      const res = await api.post('/community/threads/', payload)
+      return res.data
+    },
 
-      // 🔸 mock 생성 (HomeView 기준 필드 맞춤)
-      const newThread = {
-        id: Date.now(),
-        title: payload.title,
-        content: payload.content,
-        author: null,
-        created_at: new Date().toISOString(),
-        updated_at: new Date().toISOString(),
-        view_count: 0,
-        liked_users: [],
-        policy: {
-          pk: payload.policy,
-        },
-      }
+    /** 스레드 수정 */
+    async updateThread(threadId, payload) {
+      const res = await api.put(`/community/threads/${threadId}/`, payload)
+      return res.data
+    },
 
-      this.threads.unshift(newThread)
-
-      // 🔸 나중에 API 연동 시
-      // const res = await axios.post('/api/threads/', payload)
-      // this.threads.unshift(normalize(res.data))
+    /** 스레드 삭제 */
+    async deleteThread(threadId) {
+      await api.delete(`/community/threads/${threadId}/`)
+      this.threads = this.threads.filter(t => t.id !== threadId)
     },
   },
 })
