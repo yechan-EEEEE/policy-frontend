@@ -55,6 +55,22 @@ const goMyPage = () => router.push('/mypage')
   align-items: center;
   justify-content: space-between;
   padding: 0 32px;
+  position: relative;
+}
+
+.navbar::after {
+  content: '';
+  position: absolute;
+  bottom: 0;
+  left: 0;
+  right: 0;
+  height: 1px;
+  background: linear-gradient(
+    to right,
+    transparent,
+    rgba(255,255,255,0.4),
+    transparent
+  );
 }
 
 .logo {
