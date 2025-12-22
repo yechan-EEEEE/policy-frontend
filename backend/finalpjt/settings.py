@@ -61,6 +61,8 @@ MIDDLEWARE = [
     'django.middleware.clickjacking.XFrameOptionsMiddleware',
 ]
 
+CORS_ALLOW_CREDENTIALS = True
+
 CORS_ALLOWED_ORIGINS = [
     "http://localhost:5173",
     "http://127.0.0.1:5173",
@@ -153,6 +155,8 @@ MEDIA_ROOT = BASE_DIR / 'media'
 DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
 
 CSRF_TRUSTED_ORIGINS = [
-	'http://43.201.38.152',
-	'http://43.201.38.152:8000',
+    "http://localhost:5173",
+    "http://127.0.0.1:5173",
+    "http://43.201.38.152",
+    "http://43.201.38.152:8000",
 ]
