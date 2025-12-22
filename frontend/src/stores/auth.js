@@ -1,65 +1,49 @@
 import { defineStore } from 'pinia'
+import api from '@/api/axios'   // ⚠️ axios 인스턴스 사용
 
 export const useAuthStore = defineStore('auth', {
   state: () => ({
     isLogin: false,
     user: null,
-    token: null
   }),
 
   actions: {
-    signup(userData) {
-        this.user = userData
-        this.token = null
+    // 회원가입
+    async signup(userData) {
+      await api.post('/accounts/signup/', userData)
+      // 회원가입 후 바로 로그인 시도
+      await this.login({
+        username: userData.username,
+        password: userData.password,
+      })
+    },
+
+    // 로그인
+    async login(credentials) {
+      const res = await api.post('/accounts/login/', credentials)
+
+      // 백엔드가 user 정보를 내려준다고 가정
+      this.user = res.data
+      this.isLogin = true
+    },
+
+    // 로그아웃
+    async logout() {
+      await api.post('/accounts/logout/')
+      this.user = null
+      this.isLogin = false
+    },
+
+    // 새로고침 시 로그인 상태 복구
+    async fetchUser() {
+      try {
+        const res = await api.get('/accounts/profile/')
+        this.user = res.data
         this.isLogin = true
-
-        localStorage.setItem(
-        'auth',
-        JSON.stringify({
-            user: userData,
-            token: null
-        })
-        )
-    },
-
-    login({ user, token }) {
-    if (!user || !user.username) {
-        console.warn('로그인 실패: 유효하지 않은 사용자')
-        return
-    }
-
-    this.user = user
-    this.token = token
-    this.isLogin = true
-
-    localStorage.setItem('auth', JSON.stringify({
-        user,
-        token
-    }))
-    },
-
-    logout() {
+      } catch (err) {
         this.user = null
-        this.token = null
         this.isLogin = false
-        localStorage.removeItem('auth')
+      }
     },
-
-    loadAuth() {
-    const saved = localStorage.getItem('auth')
-    if (!saved) return
-
-    const { user, token } = JSON.parse(saved)
-
-    if (!user || !user.username) {
-        localStorage.removeItem('auth')
-        return
-    }
-
-    this.user = user
-    this.token = token
-    this.isLogin = true
-    }
-    }
-
+  },
 })
