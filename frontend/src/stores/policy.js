@@ -10,7 +10,9 @@ export const usePolicyStore = defineStore('policy', {
 
   getters: {
     getByPlcyNo: (state) => (plcyNo) => {
-      return state.policies.find(p => p.plcyNo === plcyNo)
+      return state.policies.find(
+        p => String(p.plcyNo) === String(plcyNo)
+      )
     },
 
     categories: (state) => {

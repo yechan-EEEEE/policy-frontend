@@ -70,8 +70,6 @@ const submitLogin = async () => {
   }
 }
 
-
-
 const goSignup = () => {
   router.push('/signup')
 }

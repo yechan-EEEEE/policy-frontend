@@ -10,54 +10,12 @@
         <strong>{{ currentPolicy.plcyNm }}</strong> 정책의 게시글
       </p>
 
-      <!-- 검색 -->
+      <!-- 🔍 제목 검색 -->
       <input
         v-model="keyword"
         class="search-input"
-        placeholder="게시글 제목 또는 내용 검색"
+        placeholder="게시글 제목 검색"
       />
-
-      <!-- 대분류 -->
-      <div class="filter-group">
-        <strong>대분류</strong>
-        <div class="filter-buttons">
-          <button
-            v-for="cat in mainCategories"
-            :key="cat"
-            :class="{ active: selectedCategory === cat }"
-            @click="selectCategory(cat)"
-          >
-            {{ cat }}
-          </button>
-          <button
-            :class="{ active: selectedCategory === '' }"
-            @click="selectCategory('')"
-          >
-            전체
-          </button>
-        </div>
-      </div>
-
-      <!-- 소분류 -->
-      <div v-if="subCategories.length" class="filter-group">
-        <strong>소분류</strong>
-        <div class="filter-buttons">
-          <button
-            v-for="sub in subCategories"
-            :key="sub"
-            :class="{ active: selectedSubCategory === sub }"
-            @click="selectSubCategory(sub)"
-          >
-            {{ sub }}
-          </button>
-          <button
-            :class="{ active: selectedSubCategory === '' }"
-            @click="selectSubCategory('')"
-          >
-            전체
-          </button>
-        </div>
-      </div>
 
       <hr />
 
@@ -70,17 +28,10 @@
           @click="goDetail(thread.id)"
         >
           <h3 class="card-title">{{ thread.title }}</h3>
-          <p class="card-desc">{{ thread.content }}</p>
 
           <div class="card-meta">
-            <span>
-              {{
-                policyStore.getById(thread.policy)
-                  ? `${policyStore.getById(thread.policy).lclsfNm} / ${policyStore.getById(thread.policy).mclsfNm}`
-                  : '정책 정보 없음'
-              }}
-            </span>
-            <span>👍 {{ thread.liked_count ?? 0 }}</span>
+            <span>👁 {{ thread.view_count }}</span>
+            <span>❤️ {{ thread.liked_count }}</span>
           </div>
         </div>
 
@@ -97,20 +48,17 @@ import { ref, computed, onMounted } from 'vue'
 import { useRouter, useRoute } from 'vue-router'
 import { useThreadStore } from '@/stores/thread'
 import { usePolicyStore } from '@/stores/policy'
-import { useAuthStore } from '@/stores/auth'
 import AppNavbar from '@/components/common/AppNavbar.vue'
 
 const router = useRouter()
 const route = useRoute()
 const threadStore = useThreadStore()
 const policyStore = usePolicyStore()
-const auth = useAuthStore()
 
+/* 🔍 검색어 */
 const keyword = ref('')
-const onlyMatched = ref(false)
-const selectedCategory = ref('')
-const selectedSubCategory = ref('')
 
+/* 초기 로딩 */
 onMounted(async () => {
   if (!policyStore.policies.length) {
     await policyStore.fetchPolicies()
@@ -123,56 +71,23 @@ onMounted(async () => {
   }
 })
 
+/* thread 목록 */
 const threads = computed(() => threadStore.threads)
 
-/* 대분류 / 소분류는 정책 기준 */
-const mainCategories = computed(() => policyStore.categories)
-
-const subCategories = computed(() => {
-  if (!selectedCategory.value) return []
-  return policyStore.subCategories(selectedCategory.value)
-})
-
-/* 필터링 */
+/* 🔍 제목 검색 필터 */
 const filteredThreads = computed(() => {
   return threads.value.filter(t => {
-    if (!policyStore.isLoaded) return true
-
-    const policy = policyStore.getById(t.policy)
-    if (!policy) return false
-
-    if (selectedCategory.value && policy.lclsfNm !== selectedCategory.value) {
-      return false
-    }
-
-    if (selectedSubCategory.value && policy.mclsfNm !== selectedSubCategory.value) {
-      return false
-    }
-
     if (
       keyword.value &&
-      !t.title.includes(keyword.value) &&
-      !t.content.includes(keyword.value)
+      !t.title.toLowerCase().includes(keyword.value.toLowerCase())
     ) {
       return false
     }
-
     return true
   })
 })
 
-const selectCategory = (cat) => {
-  selectedCategory.value = cat
-  selectedSubCategory.value = ''
-}
-
-const selectSubCategory = (sub) => {
-  selectedSubCategory.value = sub
-}
-
-const goDetail = (threadId) => {
-  router.push(`/threads/${threadId}`)
-}
+/* 정책 정보 (상단 안내용) */
 const currentPolicy = computed(() => {
   const plcyNo = route.query.policyId
   if (!plcyNo) return null
@@ -182,6 +97,10 @@ const currentPolicy = computed(() => {
   )
 })
 
+/* 상세 페이지 이동 */
+const goDetail = (threadId) => {
+  router.push(`/threads/${threadId}`)
+}
 </script>
 
 <style scoped>
@@ -216,62 +135,7 @@ const currentPolicy = computed(() => {
   margin-bottom: 20px;
 }
 
-/* 필터 */
-.custom-filter {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 10px;
-  align-items: center;
-  margin-bottom: 20px;
-}
-
-.filter-chip {
-  padding: 8px 14px;
-  border-radius: 20px;
-  border: 1px solid #d1d5db;
-  background: #f1f5f9;
-  cursor: pointer;
-  font-size: 13px;
-}
-
-.filter-chip.active {
-  background: #3b82f6;
-  color: white;
-  border-color: #3b82f6;
-}
-
-/* 분류 */
-.filter-group {
-  margin-top: 20px;
-}
-
-.filter-buttons {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 8px;
-  margin-top: 8px;
-}
-
-.filter-buttons button {
-  padding: 6px 14px;
-  border-radius: 16px;
-  border: 1px solid #d1d5db;
-  background: #f9fafb;
-  cursor: pointer;
-  font-size: 13px;
-}
-
-.filter-buttons button.active {
-  background: #2563eb;
-  color: white;
-  border-color: #2563eb;
-}
-
-hr {
-    margin: 32px 0;
-}
-
-/* 카드 */
+/* 카드 영역 */
 .card-list {
   margin-top: 24px;
   display: grid;
@@ -294,18 +158,12 @@ hr {
 
 .card-title {
   font-size: 18px;
-  margin-bottom: 8px;
-}
-
-.card-desc {
-  font-size: 14px;
-  color: #4b5563;
-  line-height: 1.5;
+  margin-bottom: 10px;
 }
 
 .card-meta {
-  display: block;
-  margin-top: 10px;
+  display: flex;
+  gap: 16px;
   font-size: 13px;
   color: #6b7280;
 }
@@ -313,11 +171,12 @@ hr {
 .empty-text {
   color: #6b7280;
   font-size: 14px;
+  margin-top: 20px;
 }
+
 .policy-filter-title {
   margin: 8px 0 20px;
   color: #2563eb;
   font-size: 15px;
 }
-
 </style>
