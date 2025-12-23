@@ -26,29 +26,29 @@
     <div class="policy-cards">
       <div
         v-for="p in recommendedPolicies"
-        :key="p.pk"
+        :key="p.plcyNo"
         class="policy-card"
-        @click="goPolicy(p.pk)"
+        @click="goPolicy(p.plcyNo)"
       >
         <!-- 상단: 제목 / 분류 -->
         <div class="card-body">
-          <h3 class="policy-title">{{ p.title }}</h3>
+          <h3 class="policy-title">{{ p.plcyNm }}</h3>
           <p class="policy-sub">
-            {{ p.category }} / {{ p.subTitle }}
+            {{ p.lclsfNm }} / {{ p.mclsfNm }}
           </p>
         </div>
 
         <!-- 하단: 메타 정보 -->
         <div class="card-footer">
           <span class="policy-like">
-            ⭐ {{ p.liked_users?.length || 0 }}
+            ⭐ {{ p.liked_count ?? 0 }}
           </span>
 
           <span
             class="policy-threads"
-            @click.stop="goPolicyThreads(p.pk)"
+            @click.stop="goPolicyThreads(p.plcyNo)"
           >
-            💬 {{ p.thread_count || 0 }}
+            💬 {{ p.thread_count ?? 0 }}
           </span>
         </div>
       </div>
@@ -148,12 +148,11 @@ const recommendedThreads = computed(() => {
   return list.slice(0, 4)
 })
 
-const goPolicy = (pk) => router.push(`/policies/${pk}`)
+const goPolicy = (plcyNo) => router.push(`/policies/${plcyNo}`)
 const goPolicies = () => router.push('/policies')
 const goThread = (id) => router.push(`/threads/${id}`)
 const goThreads = () => router.push('/threads')
 </script>
-
 
 <style scoped>
 .home {
