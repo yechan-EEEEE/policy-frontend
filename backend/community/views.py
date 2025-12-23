@@ -12,7 +12,7 @@ from .serializers import (
 
 @api_view(['GET', 'POST'])
 @permission_classes([AllowAny])
-def post_list(request):
+def thread_list(request):
     if request.method == 'GET':
         posts = Post.objects.all()
         
@@ -44,8 +44,8 @@ def post_list(request):
             return Response(serializer.data, status=status.HTTP_201_CREATED)
 
 @api_view(['GET', 'PUT', 'DELETE'])
-def post_detail(request, post_pk):
-    post = get_object_or_404(Post, pk=post_pk)
+def thread_detail(request, thread_pk):
+    post = get_object_or_404(Post, pk=thread_pk)
     
     if request.method == 'GET':
         post.view_count += 1
@@ -93,7 +93,7 @@ def post_detail(request, post_pk):
 
 @api_view(['POST'])
 @permission_classes([IsAuthenticated])
-def post_like(request, post_pk):
+def thread_like(request, post_pk):
     post = get_object_or_404(Post, pk=post_pk)
     user = request.user
     
@@ -109,6 +109,13 @@ def post_like(request, post_pk):
             {'message': '좋아요가 추가되었습니다.', 'is_liked': True},
             status=status.HTTP_201_CREATED
         )
+
+@api_view(['GET'])
+@permission_classes([AllowAny])
+def thread_list_by_policy(request, plcyNo):
+    posts = Post.objects.filter(policy__plcyNo=plcyNo).order_by('-created_at')
+    serializer = PostListSerializer(posts, many=True)
+    return Response(serializer.data)
 
 @api_view(['GET', 'POST'])
 def comment_list(request, post_pk):
