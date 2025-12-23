@@ -5,31 +5,17 @@
     <section class="thread-container">
       <h1 class="page-title">게시글 목록</h1>
 
+      <!-- 🔥 정책 필터 안내 -->
+      <p v-if="currentPolicy" class="policy-filter-title">
+        <strong>{{ currentPolicy.plcyNm }}</strong> 정책의 게시글
+      </p>
+
       <!-- 검색 -->
       <input
         v-model="keyword"
         class="search-input"
         placeholder="게시글 제목 또는 내용 검색"
       />
-
-      <!-- 맞춤 필터 -->
-      <div class="custom-filter">
-        <button
-          class="filter-chip"
-          :class="{ active: onlyMatched }"
-          @click="toggleMatched"
-        >
-          🎯 내 조건에 맞는 게시글
-        </button>
-
-        <div v-if="onlyMatched && auth.isLogin" class="match-summary">
-          총 <strong>{{ filteredThreads.length }}</strong>개의 게시글이 내 조건에 맞습니다.
-        </div>
-
-        <span v-if="!auth.isLogin" class="filter-disabled">
-          로그인 후 사용 가능
-        </span>
-      </div>
 
       <!-- 대분류 -->
       <div class="filter-group">
@@ -85,13 +71,16 @@
         >
           <h3 class="card-title">{{ thread.title }}</h3>
           <p class="card-desc">{{ thread.content }}</p>
+
           <div class="card-meta">
             <span>
-              {{ policyStore.getByPlcyNo(thread.policy)?.lclsfNm }}
-              /
-              {{ policyStore.getByPlcyNo(thread.policy)?.mclsfNm }}
+              {{
+                policyStore.getById(thread.policy)
+                  ? `${policyStore.getById(thread.policy).lclsfNm} / ${policyStore.getById(thread.policy).mclsfNm}`
+                  : '정책 정보 없음'
+              }}
             </span>
-            <span>👍 {{ thread.like_count ?? 0 }}</span>
+            <span>👍 {{ thread.liked_count ?? 0 }}</span>
           </div>
         </div>
 
@@ -123,9 +112,10 @@ const selectedCategory = ref('')
 const selectedSubCategory = ref('')
 
 onMounted(async () => {
-  await policyStore.fetchPolicies()
+  if (!policyStore.policies.length) {
+    await policyStore.fetchPolicies()
+  }
 
-  // 정책 기준 목록 or 전체
   if (route.query.policyId) {
     await threadStore.fetchThreadsByPolicy(route.query.policyId)
   } else {
@@ -146,10 +136,10 @@ const subCategories = computed(() => {
 /* 필터링 */
 const filteredThreads = computed(() => {
   return threads.value.filter(t => {
-    const policy = policyStore.getByPlcyNo?.(t.policy)
+    if (!policyStore.isLoaded) return true
 
-    // 🔥 정책 아직 로딩 안 됐으면 그냥 보여줌
-    if (!policyStore.isLoaded) return threads.value
+    const policy = policyStore.getById(t.policy)
+    if (!policy) return false
 
     if (selectedCategory.value && policy.lclsfNm !== selectedCategory.value) {
       return false
@@ -171,7 +161,6 @@ const filteredThreads = computed(() => {
   })
 })
 
-
 const selectCategory = (cat) => {
   selectedCategory.value = cat
   selectedSubCategory.value = ''
@@ -184,9 +173,16 @@ const selectSubCategory = (sub) => {
 const goDetail = (threadId) => {
   router.push(`/threads/${threadId}`)
 }
+const currentPolicy = computed(() => {
+  const plcyNo = route.query.policyId
+  if (!plcyNo) return null
+
+  return policyStore.policies.find(
+    p => String(p.plcyNo) === String(plcyNo)
+  )
+})
+
 </script>
-
-
 
 <style scoped>
 /* 전체 페이지 */
@@ -318,4 +314,10 @@ hr {
   color: #6b7280;
   font-size: 14px;
 }
+.policy-filter-title {
+  margin: 8px 0 20px;
+  color: #2563eb;
+  font-size: 15px;
+}
+
 </style>

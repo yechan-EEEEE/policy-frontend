@@ -7,8 +7,26 @@
       <!-- 제목 카드 -->
       <section class="card header-card">
         <span class="badge">{{ policy.lclsfNm }}</span>
+
         <h1 class="title">{{ policy.plcyNm }}</h1>
         <p class="desc">{{ policy.plcyExplnCn }}</p>
+
+        <!-- ⭐ 좋아요 영역 -->
+        <div class="policy-actions">
+          <button
+            class="like-btn"
+            :class="{ liked: policy.is_liked }"
+            @click="toggleLike"
+          >
+            ⭐ {{ policy.liked_count ?? 0 }}
+          </button>
+
+          <span class="thread-count"
+          @click.stop="goPolicyThreads(policy.plcyNo)"
+          >
+            💬 {{ policy.thread_count ?? 0 }}
+          </span>
+        </div>
       </section>
 
       <!-- 핵심 정보 -->
@@ -96,8 +114,40 @@ watch(
 const goWrite = () => {
   router.push(`/threads/${route.params.plcyNo}/write`)
 }
-</script>
 
+const toggleLike = async () => {
+  if (!auth.isLogin) {
+    alert('로그인이 필요합니다.')
+    return
+  }
+
+  try {
+    const res = await policyStore.toggleLike(policy.value.plcyNo)
+
+    // ✅ detail 상태 즉시 반영
+    policyStore.policyDetail.is_liked = res.is_liked
+    policyStore.policyDetail.liked_count = res.liked_count
+
+    // ✅ 목록에도 반영 (Home / List 동기화)
+    const target = policyStore.policies.find(
+      p => p.plcyNo === policy.value.plcyNo
+    )
+    if (target) {
+      target.is_liked = res.is_liked
+      target.liked_count = res.liked_count
+    }
+  } catch (e) {
+    alert('좋아요 처리에 실패했습니다.')
+  }
+}
+const goPolicyThreads = (plcyNo) => {
+  router.push({
+    path: '/threads',
+    query: { policyId: plcyNo },
+  })
+}
+
+</script>
 
 <style scoped>
 .policy-detail-page {
@@ -179,6 +229,41 @@ const goWrite = () => {
 }
 
 /* 액션 */
+.policy-actions {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  margin-top: 16px;
+}
+
+.like-btn,
+.thread-count {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 20px;
+  padding: 6px 14px;
+  font-size: 14px;
+  line-height: 1; /* 🔥 baseline 문제 차단 */
+}
+
+.like-btn {
+  background: #f3f4f6;
+  border: none;
+  cursor: pointer;
+}
+
+.like-btn.liked {
+  background: #fde68a;
+  color: #92400e;
+}
+
+.thread-count {
+  background: #68c2e6ad;
+  border: none;
+  color: #4e535e;
+  cursor: pointer;
+}
 .actions {
   display: flex;
   justify-content: flex-end;

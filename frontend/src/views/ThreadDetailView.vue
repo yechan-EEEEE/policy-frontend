@@ -15,22 +15,16 @@
         {{ thread.content }}
       </div>
 
-      <div class="thread-actions">
-        <button
-          class="like-btn"
-          :class="{ liked: thread.is_liked }"
-          @click="toggleLike"
-          :disabled="!auth.isLogin"
-        >
-          {{ thread.is_liked ? '❤️' : '🤍' }}
+      <div class="actions">
+        <button @click="toggleLike">
+          {{ thread.is_liked ? '❤️ 좋아요' : '🤍 좋아요' }}
           {{ thread.liked_count }}
         </button>
 
-        <button class="ghost" @click="goBack">목록으로</button>
+        <button @click="goBack">목록으로</button>
 
         <button
           v-if="auth.user?.id === thread.author"
-          class="primary"
           @click="goEdit"
         >
           수정
@@ -86,13 +80,11 @@ const toggleLike = async () => {
 
     // 🔥 즉시 UI 반영
     thread.value.is_liked = res.liked
-    thread.value.liked_count = res.liked_count
-  } catch (err) {
-    console.error(err)
-    alert('좋아요 처리에 실패했습니다.')
+    thread.value.liked_count += res.is_liked ? 1 : -1
+  } catch {
+    alert('로그인이 필요합니다.')
   }
 }
-
 </script>
 
 <style scoped>

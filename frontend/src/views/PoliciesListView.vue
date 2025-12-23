@@ -27,7 +27,7 @@
           :class="{ active: hideExpired }"
           @click="hideExpired = !hideExpired"
         >
-          ⏰ 신청기간 지난 정책 숨기기
+          ⏰ 사업기간 지난 정책 숨기기
         </button>
 
         <span
@@ -111,9 +111,22 @@
         >
           <h3 class="card-title">{{ policy.plcyNm }}</h3>
           <p class="card-desc">{{ policy.plcyExplnCn }}</p>
-          <span class="card-meta">
+
+          <!-- 분류 -->
+          <div class="card-meta">
             {{ policy.lclsfNm }} / {{ policy.mclsfNm }}
-          </span>
+          </div>
+
+          <!-- 🔥 좋아요 / 관련 글 -->
+          <div class="card-stats">
+            <span class="like">
+              ⭐ {{ policy.liked_count ?? 0 }}
+            </span>
+
+            <span class="threads">
+              💬 {{ policy.thread_count ?? 0 }}
+            </span>
+          </div>
         </div>
 
         <p
@@ -126,16 +139,53 @@
 
       <!-- 페이지네이션 -->
       <div class="pagination" v-if="totalPages > 1">
+
+        <!-- 처음 -->
         <button
-          v-for="page in totalPages"
+          class="arrow"
+          :disabled="currentPage === 1"
+          @click="goFirst"
+        >
+          &laquo;
+        </button>
+
+        <!-- 이전 그룹 -->
+        <button
+          class="arrow"
+          :disabled="currentGroup === 0"
+          @click="prevGroup"
+        >
+          &lsaquo;
+        </button>
+
+        <!-- 페이지 번호 -->
+        <button
+          v-for="page in visiblePages"
           :key="page"
           :class="{ active: page === currentPage }"
           @click="goPage(page)"
         >
           {{ page }}
         </button>
-      </div>
 
+        <!-- 다음 그룹 -->
+        <button
+          class="arrow"
+          :disabled="(currentGroup + 1) * PAGES_PER_GROUP >= totalPages"
+          @click="nextGroup"
+        >
+          &rsaquo;
+        </button>
+
+        <!-- 끝 -->
+        <button
+          class="arrow"
+          :disabled="currentPage === totalPages"
+          @click="goLast"
+        >
+          &raquo;
+        </button>
+      </div>
     </section>
   </main>
 </template>
@@ -206,13 +256,13 @@ const subCategories = computed(() => {
 // 필터링
 const filteredPolicies = computed(() => {
   return policies.value.filter(p => {
-    if (selectedCategory.value && p.lclsfNm !== selectedCategory.value) {
+    // ✅ 신청기간 지난 정책 숨기기
+    if (hideExpired.value && isExpired(p.bizPrdEndYmd)) {
       return false
     }
 
-    if (selectedSubCategory.value && p.mclsfNm !== selectedSubCategory.value) {
-      return false
-    }
+    if (selectedCategory.value && p.lclsfNm !== selectedCategory.value) return false
+    if (selectedSubCategory.value && p.mclsfNm !== selectedSubCategory.value) return false
 
     if (
       keyword.value &&
@@ -223,19 +273,31 @@ const filteredPolicies = computed(() => {
     }
 
     if (onlyMatched.value && auth.isLogin) {
-      const age = auth.user.age
+      const age = auth.user.age // (이 부분은 이전에 userAge로 바꾸는게 더 안전)
       const min = Number(p.sprtTrgtMinAge)
       const max = Number(p.sprtTrgtMaxAge)
-
-      if ((min && age < min) || (max && age > max)) {
-        return false
-      }
+      if ((min && age < min) || (max && age > max)) return false
     }
 
     return true
   })
 })
 
+const isExpired = (endYmd) => {
+  if (!endYmd) return false
+
+  // "20250720" -> Date(2025, 6, 20)
+  const y = Number(endYmd.slice(0, 4))
+  const m = Number(endYmd.slice(4, 6)) - 1
+  const d = Number(endYmd.slice(6, 8))
+
+  if (!y || m < 0 || !d) return false
+
+  const endDate = new Date(y, m, d)
+  endDate.setHours(23, 59, 59, 999) // 해당 날짜 끝까지 유효
+
+  return endDate < new Date()
+}
 
 const toggleMatched = () => {
   if (!auth.isLogin) return
@@ -251,24 +313,8 @@ const goDetail = (plcyNo) => {
   router.push(`/policies/${plcyNo}`)
 }
 
-// const isExpired = (aplyYmd) => {
-//   if (!aplyYmd) return false
-//   const parts = aplyYmd.split('~')
-//   if (parts.length !== 2) return false
-
-//   const end = parts[1].trim()
-//   const endDate = new Date(
-//     end.slice(0, 4),
-//     Number(end.slice(4, 6)) - 1,
-//     end.slice(6, 8)
-//   )
-
-//   const today = new Date()
-//   today.setHours(0, 0, 0, 0)
-//   return endDate < today
-// }
-
 const ITEMS_PER_PAGE = 10
+const PAGES_PER_GROUP = 10
 
 const currentPage = computed(() => {
   return Number(route.query.page) || 1
@@ -278,10 +324,30 @@ const totalPages = computed(() => {
   return Math.ceil(filteredPolicies.value.length / ITEMS_PER_PAGE)
 })
 
+// 🔥 현재 페이지가 속한 그룹 (0부터 시작)
+const currentGroup = computed(() => {
+  return Math.floor((currentPage.value - 1) / PAGES_PER_GROUP)
+})
+
 const pagedPolicies = computed(() => {
   const start = (currentPage.value - 1) * ITEMS_PER_PAGE
   const end = start + ITEMS_PER_PAGE
   return filteredPolicies.value.slice(start, end)
+})
+
+const visiblePages = computed(() => {
+  const start =
+    currentGroup.value * PAGES_PER_GROUP + 1
+  const end = Math.min(
+    start + PAGES_PER_GROUP - 1,
+    totalPages.value
+  )
+
+  const pages = []
+  for (let i = start; i <= end; i++) {
+    pages.push(i)
+  }
+  return pages
 })
 
 const goPage = (page) => {
@@ -292,6 +358,25 @@ const goPage = (page) => {
       page,
     },
   })
+}
+
+const prevGroup = () => {
+  if (currentGroup.value === 0) return
+  goPage(currentGroup.value * PAGES_PER_GROUP)
+}
+
+const nextGroup = () => {
+  const nextStart =
+    (currentGroup.value + 1) * PAGES_PER_GROUP + 1
+  if (nextStart > totalPages.value) return
+  goPage(nextStart)
+}
+const goFirst = () => {
+  goPage(1)
+}
+
+const goLast = () => {
+  goPage(totalPages.value)
 }
 
 </script>
@@ -406,6 +491,26 @@ hr {
   gap: 16px;
 }
 
+.card-stats {
+  display: flex;
+  gap: 14px;
+  margin-top: 8px;
+  font-size: 14px;
+  color: #6b7280;
+}
+
+.card-stats .like {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+}
+
+.card-stats .threads {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+}
+
 .policy-card {
   height: 180px;
   display: flex;
@@ -416,6 +521,7 @@ hr {
   border-radius: 12px;
   padding: 20px;
   background: #ffffff;
+  cursor: pointer;
 }
 
 .policy-card h3 {
@@ -473,17 +579,18 @@ hr {
 }
 
 .pagination {
-  margin-top: 32px;
   display: flex;
+  gap: 6px;
   justify-content: center;
-  gap: 8px;
+  margin-top: 24px;
+  flex-wrap: wrap;
 }
 
 .pagination button {
-  padding: 6px 12px;
+  padding: 6px 10px;
   border-radius: 6px;
   border: 1px solid #d1d5db;
-  background: #f9fafb;
+  background: white;
   cursor: pointer;
 }
 
@@ -491,6 +598,15 @@ hr {
   background: #2563eb;
   color: white;
   border-color: #2563eb;
+}
+
+.pagination button.arrow {
+  font-weight: bold;
+}
+
+.pagination button:disabled {
+  opacity: 0.4;
+  cursor: not-allowed;
 }
 
 </style>

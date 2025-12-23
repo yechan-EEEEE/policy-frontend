@@ -10,12 +10,15 @@ import google.generativeai as genai
 from django.conf import settings
 from django.db import models
 from datetime import datetime
+from django.db.models import Count
 # Create your views here.
 
 @api_view(['GET'])
 @permission_classes([AllowAny])
 def policy_list(request):
-    policies = Policy.objects.all()
+    policies = Policy.objects.annotate(
+        thread_count=Count('threads', distinct=True)
+    )
     
     # 검색어 필터
     search  = request.query_params.get('search', None)
@@ -32,7 +35,11 @@ def policy_list(request):
     if category:
         policies = policies.filter(lclsfNm=category)
         
-    serializer = PolicyListSerializer(policies, many=True)
+    serializer = PolicySerializer(
+        policies,
+        many=True,
+        context={'request': request}
+    )
     return Response(serializer.data)
 
 @api_view(['GET'])
@@ -45,21 +52,20 @@ def policy_detail(request, plcyNo):
 @api_view(['POST'])
 @permission_classes([IsAuthenticated])
 def policy_like(request, plcyNo):
-    policy = get_object_or_404(Policy, plcyNo=plcyNo)
+    policy = get_object_or_404(Policy, pk=plcyNo)
     user = request.user
-    
+
     if policy.liked_users.filter(id=user.id).exists():
         policy.liked_users.remove(user)
-        return Response(
-            {'message': '좋아요가 취소되었습니다', 'is_liked': False},
-            status=status.HTTP_200_OK
-        )
+        liked = False
     else:
         policy.liked_users.add(user)
-        return Response(
-            {'message': '좋아요가 추가되었습니다', 'is_likes': True},
-            status=status.HTTP_201_CREATED
-        )
+        liked = True
+
+    return Response({
+        'is_liked': liked,
+        'liked_count': policy.liked_users.count()
+    })
         
 @api_view(['GET'])
 @permission_classes([IsAuthenticated])

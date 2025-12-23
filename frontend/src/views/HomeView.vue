@@ -8,7 +8,7 @@
     <section v-if="auth.isLogin">
       <h1>{{ auth.user.username }}님에게 맞는 정책을 찾아보세요</h1>
       <p class="sub">
-        나이 {{ auth.user.age }}, 지역 {{ auth.user.region }} 기준으로
+        나이: {{ userAge ?? '-' }}, 지역: {{ auth.user.region }} 기준으로
         맞춤 정책을 추천해드립니다.
       </p>
     </section>
@@ -40,14 +40,16 @@
 
         <!-- 하단: 메타 정보 -->
         <div class="card-footer">
-          <span class="policy-like">
+          <span
+            class="policy-like"
+            @click.stop="togglePolicyLike(p)"
+          >
             ⭐ {{ p.liked_count ?? 0 }}
           </span>
 
           <span
             class="policy-threads"
-            @click.stop="goPolicyThreads(p.plcyNo)"
-          >
+            >
             💬 {{ p.thread_count ?? 0 }}
           </span>
         </div>
@@ -72,7 +74,7 @@
       >
         <div class="thread-title">{{ t.title }}</div>
         <div class="thread-meta">
-          👀 {{ t.view_count || 0 }} · ❤️ {{ (t.liked_users?.length || 0) }}
+          👀 {{ t.view_count || 0 }} · ❤️ {{ (t.liked_count || 0) }}
         </div>
       </div>
 
@@ -105,10 +107,7 @@ onMounted(() => {
   if (!policyStore.policies.length) {
     policyStore.fetchPolicies()
   }
-
-  if (!threadStore.threads.length) {
     threadStore.fetchThreads()
-  }
 })
 
 const userAge = computed(() => {
@@ -148,10 +147,22 @@ const recommendedThreads = computed(() => {
   return list.slice(0, 4)
 })
 
+const togglePolicyLike = async (policy) => {
+  if (!auth.isLogin) {
+    alert('로그인이 필요합니다.')
+    return
+  }
+
+  const res = await policyStore.toggleLike(policy.plcyNo)
+  policy.liked_count = res.liked_count
+  policy.is_liked = res.is_liked
+}
+
 const goPolicy = (plcyNo) => router.push(`/policies/${plcyNo}`)
 const goPolicies = () => router.push('/policies')
 const goThread = (id) => router.push(`/threads/${id}`)
 const goThreads = () => router.push('/threads')
+
 </script>
 
 <style scoped>
@@ -238,10 +249,6 @@ h1 {
   color: #475569;
   font-size: 15px;
   cursor: pointer;
-}
-
-.policy-threads:hover {
-  text-decoration: underline;
 }
 
 /* 버튼 */

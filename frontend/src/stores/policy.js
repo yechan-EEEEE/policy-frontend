@@ -28,6 +28,9 @@ export const usePolicyStore = defineStore('policy', {
         )
       ]
     },
+
+    getById: (state) => (id) =>
+    state.policies.find(p => p.id === id),    
   },
 
   actions: {
