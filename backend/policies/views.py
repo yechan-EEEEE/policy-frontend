@@ -156,44 +156,46 @@ def fetch_policies(request):
             status=status.HTTP_500_INTERNAL_SERVER_ERROR
         )
         
-@api_view(['POST'])
+@api_view(['GET'])   # ✅ GET으로 변경
 @permission_classes([AllowAny])
 def policy_summarize(request, plcyNo):
-    policy = get_object_or_404(Policy, plcyNo=plcyNo)
-    
     try:
+        policy = get_object_or_404(Policy, plcyNo=plcyNo)
+
         genai.configure(api_key=settings.GEMINI_API_KEY)
-        model = genai.GenerativeModel('gemini-2.5-flash')
-        
+        model = genai.GenerativeModel('gemini-1.5-flash')  # ✅ 수정
+
+        sprt = policy.plcySprtCn or '정보 없음'
+        expln = policy.plcyExplnCn or '정보 없음'
+
         prompt = f"""
-            다음 청년 정책을 3-5줄로 요약해주세요. 반드시 아래 형식을 따라주세요:
+다음 청년 정책을 3~5줄로 요약해주세요.
 
-            **정책명**: {policy.plcyNm}
+정책명: {policy.plcyNm}
 
-            **지원 내용**:
-            {policy.plcySprtCn}
+지원 내용:
+{sprt}
 
-            **상세 설명**:
-            {policy.plcyExplnCn}
+상세 설명:
+{expln}
 
-            요약 시 다음 내용을 포함해주세요:
-            1. 핵심 지원 내용 (한 줄)
-            2. 신청 자격 요건 (한 줄)  
-            3. 주요 혜택 (한 줄)
+아래 형식으로 작성해주세요:
+- 핵심 지원 내용
+- 신청 자격 요건
+- 주요 혜택
+"""
 
-            간단명료하게 작성해주세요.
-        """
         response = model.generate_content(prompt)
-        summary = response.text
-        
+
         return Response({
             'plcyNo': plcyNo,
             'plcyNm': policy.plcyNm,
-            'summary': summary
+            'summary': response.text
         }, status=status.HTTP_200_OK)
-        
+
     except Exception as e:
+        print('🔥 AI SUMMARY ERROR:', e)
         return Response(
-            {'error': f'요약 생성 중 오류가 발생했습니다: {str(e)}'},
+            {'error': '요약 생성 중 오류가 발생했습니다.'},
             status=status.HTTP_500_INTERNAL_SERVER_ERROR
         )

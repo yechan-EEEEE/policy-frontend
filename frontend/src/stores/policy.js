@@ -63,7 +63,7 @@ export const usePolicyStore = defineStore('policy', {
 
     /** 정책 요약 (AI) */
     async summarizePolicy(plcyNo) {
-      const res = await api.post(`/policies/${plcyNo}/summarize/`)
+      const res = await api.get(`/policies/${plcyNo}/summarize/`)
       return res.data
     },
   },
