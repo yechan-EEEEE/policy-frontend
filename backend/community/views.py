@@ -44,6 +44,7 @@ def thread_list(request):
             return Response(serializer.data, status=status.HTTP_201_CREATED)
 
 @api_view(['GET', 'PUT', 'DELETE'])
+@permission_classes([AllowAny])
 def thread_detail(request, thread_pk):
     post = get_object_or_404(Post, pk=thread_pk)
     
