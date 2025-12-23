@@ -100,16 +100,19 @@ def thread_like(request, post_pk):
     
     if post.liked_users.filter(id=user.id).exists():
         post.liked_users.remove(user)
-        return Response(
-            {'message': '좋아요가 취소되었습니다.', 'is_liked': False},
-            status=status.HTTP_200_OK
-        )
+        liked = False
     else:
         post.liked_users.add(user)
-        return Response(
-            {'message': '좋아요가 추가되었습니다.', 'is_liked': True},
-            status=status.HTTP_201_CREATED
-        )
+        liked = True
+
+    return Response(
+        {
+            'is_liked': liked,
+            'liked_count': post.liked_users.count(),
+        },
+        status=status.HTTP_200_OK
+    )
+
 
 @api_view(['GET'])
 @permission_classes([AllowAny])

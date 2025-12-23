@@ -42,6 +42,12 @@ export const useThreadStore = defineStore('thread', {
       return res.data
     },
 
+    /** 좋아요 토글 */
+    async toggleLike(threadId) {
+      const res = await api.post(`/community/threads/${threadId}/like/`)
+      return res.data
+    },
+
     /** 스레드 수정 */
     async updateThread(threadId, payload) {
       const res = await api.put(`/community/threads/${threadId}/`, payload)

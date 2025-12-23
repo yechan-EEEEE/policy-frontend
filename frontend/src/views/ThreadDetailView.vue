@@ -16,6 +16,16 @@
       </div>
 
       <div class="thread-actions">
+        <button
+          class="like-btn"
+          :class="{ liked: thread.is_liked }"
+          @click="toggleLike"
+          :disabled="!auth.isLogin"
+        >
+          {{ thread.is_liked ? '❤️' : '🤍' }}
+          {{ thread.liked_count }}
+        </button>
+
         <button class="ghost" @click="goBack">목록으로</button>
 
         <button
@@ -26,6 +36,7 @@
           수정
         </button>
       </div>
+
     </section>
   </main>
 
@@ -63,6 +74,25 @@ const goEdit = () => {
 const goBack = () => {
   router.push('/threads')
 }
+
+const toggleLike = async () => {
+  if (!auth.isLogin) {
+    alert('로그인이 필요합니다.')
+    return
+  }
+
+  try {
+    const res = await threadStore.toggleLike(thread.value.id)
+
+    // 🔥 즉시 UI 반영
+    thread.value.is_liked = res.liked
+    thread.value.liked_count = res.liked_count
+  } catch (err) {
+    console.error(err)
+    alert('좋아요 처리에 실패했습니다.')
+  }
+}
+
 </script>
 
 <style scoped>
@@ -140,6 +170,27 @@ button.ghost:hover {
   padding: 100px;
   text-align: center;
   color: #cbd5f5;
+}
+
+.like-btn {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  padding: 10px 16px;
+  border-radius: 999px;
+  font-size: 15px;
+  background: #f1f5f9;
+  color: #0f172a;
+  cursor: pointer;
+}
+
+.like-btn.liked {
+  background: #fee2e2;
+  color: #dc2626;
+}
+
+.like-btn:hover {
+  background: #e2e8f0;
 }
 
 /* 모바일 */

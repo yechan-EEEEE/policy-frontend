@@ -7,7 +7,7 @@ urlpatterns = [
     # Thread
     path('threads/', views.thread_list, name='thread_list'),
     path('threads/<int:thread_pk>/', views.thread_detail, name='thread_detail'),
-    path('threads/<int:thread_pk>/like/', views.thread_like, name='thread_like'),
+    path('threads/<int:post_pk>/like/', views.thread_like, name='thread_like'),
 
     # Policy별 Thread
     path(
@@ -18,7 +18,7 @@ urlpatterns = [
 
     # Comment (Thread 기준)
     path(
-        'threads/<int:thread_pk>/comments/',
+        'threads/<int:post_pk>/comments/',
         views.comment_list,
         name='comment_list'
     ),
