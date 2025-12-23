@@ -4,9 +4,12 @@ from . import views
 app_name = 'community'
 
 urlpatterns = [
-    path('posts/', views.post_list, name='post_list'),
-    path('posts/<int:post_pk>/', views.post_detail, name='post_detail'),
-    path('posts/<int:post_pk>/like/', views.post_like, name='post_like'),
+    # path('posts/', views.post_list, name='post_list'),
+    path('threads/', views.post_list, name='threads_list'),
+    # path('posts/<int:post_pk>/', views.post_detail, name='post_detail'),
+    path('threads/<int:post_pk>/', views.post_detail, name='thread_detail'),
+    # path('posts/<int:post_pk>/like/', views.post_like, name='post_like'),
+    path('threads/<int:post_pk>/like/', views.post_like),
     
     path('posts/<int:post_pk>/comments/', views.comment_list, name='comment_list'),
     path('comments/<int:comment_pk>/', views.comment_detail, name='comment_detail'),
