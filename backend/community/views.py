@@ -5,6 +5,7 @@ from rest_framework.permissions import IsAuthenticated, AllowAny
 from django.shortcuts import get_object_or_404
 from django.db import models
 from .models import Post, Comment
+from django.db.models import Count
 from .serializers import (
     PostListSerializer, PostSerializer, PostDetailSerializer,
     CommentSerializer
@@ -14,34 +15,42 @@ from .serializers import (
 @permission_classes([AllowAny])
 def thread_list(request):
     if request.method == 'GET':
-        posts = Post.objects.all()
-        
-        search = request.query_params.get('search', None)
+        posts = Post.objects.annotate(
+            like_count=Count('liked_users', distinct=True),
+            comment_count=Count('comments', distinct=True),
+        )
+
+        # 🔍 검색
+        search = request.query_params.get('search')
         if search:
             posts = posts.filter(title__icontains=search)
-        
+
+        # 🔥 정렬
         ordering = request.query_params.get('ordering', '-created_at')
         if ordering == 'popular':
-            posts = posts.annotate(
-                like_count=models.Count('liked_users')
-            ).order_by('-like_count', '-created_at')
+            posts = posts.order_by('-like_count', '-created_at')
         else:
             posts = posts.order_by('-created_at')
-        
-        serializer = PostListSerializer(posts, many=True)
+
+        serializer = PostListSerializer(
+            posts,
+            many=True,
+            context={'request': request}
+        )
         return Response(serializer.data)
-    
+
     elif request.method == 'POST':
         if not request.user.is_authenticated:
             return Response(
                 {'error': '로그인이 필요합니다.'},
                 status=status.HTTP_401_UNAUTHORIZED
             )
-        
+
         serializer = PostSerializer(data=request.data)
         if serializer.is_valid(raise_exception=True):
             serializer.save(author=request.user)
             return Response(serializer.data, status=status.HTTP_201_CREATED)
+
 
 @api_view(['GET', 'PUT', 'DELETE'])
 @permission_classes([AllowAny])

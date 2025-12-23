@@ -59,6 +59,7 @@ import { useRouter } from 'vue-router'
 import { useAuthStore } from '@/stores/auth'
 import AppNavbar from '@/components/common/AppNavbar.vue'
 import { computed } from 'vue'
+import api from '@/api/axios'
 
 const age = computed(() => {
   if (!auth.user?.birth_date) return '-'
@@ -80,15 +81,23 @@ const logout = async () => {
   router.push('/login')
 }
 
-const withdraw = () => {
-  const ok = confirm('정말 회원 탈퇴하시겠습니까?\n이 작업은 되돌릴 수 없습니다.')
+const withdraw = async () => {
+  const ok = confirm(
+    '정말 회원 탈퇴하시겠습니까?\n이 작업은 되돌릴 수 없습니다.'
+  )
   if (!ok) return
 
-  // 🔥 나중에 backend DELETE API 연결
-  auth.logout()
-  alert('회원 탈퇴가 완료되었습니다.')
-  router.push('/')
+  try {
+    await api.delete('/accounts/delete/')
+    auth.clearAuth()
+    alert('회원 탈퇴가 완료되었습니다.')
+    router.push('/')
+  } catch (e) {
+    alert('회원 탈퇴에 실패했습니다.')
+    console.error(e)
+  }
 }
+
 </script>
 
 <style scoped>

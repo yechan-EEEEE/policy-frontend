@@ -62,26 +62,25 @@ def user_logout(request):
         status=status.HTTP_200_OK
     )
     
-@api_view(['GET'])
+@api_view(['GET', 'PUT', 'PATCH'])
 @permission_classes([IsAuthenticated])
 def user_profile(request):
-    serializer = UserDetailSerializer(request.user)
-    return Response(serializer.data)
+    if request.method == 'GET':
+        serializer = UserDetailSerializer(request.user)
+        return Response(serializer.data)
 
-@api_view(['PUT', 'PATCH'])
-@permission_classes([IsAuthenticated])
-def user_update(request):
-    serializer = UserSerializer(request.user, data=request.data, partial=True)
+    serializer = UserSerializer(
+        request.user,
+        data=request.data,
+        partial=True
+    )
     if serializer.is_valid(raise_exception=True):
         serializer.save()
         return Response(serializer.data)
+
     
 @api_view(['DELETE'])
 @permission_classes([IsAuthenticated])
 def user_delete(request):
-    user = request.user
-    user.delete()
-    return Response(
-        {'messsage': '회원 탈퇴가 완료되었습니다.'},
-        status=status.HTTP_204_NO_CONTENT
-    )
+    request.user.delete()
+    return Response(status=status.HTTP_204_NO_CONTENT)

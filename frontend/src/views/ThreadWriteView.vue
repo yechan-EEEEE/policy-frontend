@@ -1,43 +1,56 @@
 <template>
   <AppNavbar />
 
-  <main class="thread-write-page">
-    <section class="thread-write-container">
-      <h1 class="page-title">게시글 작성</h1>
+  <main class="thread-edit-page">
+    <section class="thread-edit-card">
+      <h1 class="edit-title">게시글 작성</h1>
 
-      <!-- ✅ 정책 이름 표시 -->
-      <p class="policy-info" v-if="policy">
+      <!-- ✅ 관련 정책 표시 -->
+      <p v-if="policy" class="policy-info">
         관련 정책: <strong>{{ policy.plcyNm }}</strong>
       </p>
-
-      <form @submit.prevent="submit">
+      
+      <form @submit.prevent="submit" class="edit-form">
         <!-- 제목 -->
-        <div class="form-group">
-          <label>제목</label>
-          <input
-            v-model="title"
-            placeholder="게시글 제목을 입력하세요"
-            required
-          />
-        </div>
+        <label class="label">제목</label>
+        <input
+          v-model="title"
+          class="input"
+          placeholder="게시글 제목을 입력하세요"
+          required
+        />
 
         <!-- 내용 -->
-        <div class="form-group">
-          <label>내용</label>
-          <textarea
-            v-model="content"
-            placeholder="게시글 내용을 입력하세요"
-            required
-          />
-        </div>
+        <label class="label">내용</label>
+        <textarea
+          v-model="content"
+          class="textarea"
+          placeholder="게시글 내용을 입력하세요"
+          required
+        />
 
-        <button class="primary" :disabled="loading">
-          {{ loading ? '작성 중...' : '등록하기' }}
-        </button>
+        <div class="actions">
+          <button
+            type="button"
+            class="ghost"
+            @click="router.back()"
+          >
+            취소
+          </button>
+
+          <button
+            type="submit"
+            class="primary"
+            :disabled="loading"
+          >
+            {{ loading ? '작성 중...' : '등록하기' }}
+          </button>
+        </div>
       </form>
     </section>
   </main>
 </template>
+
 
 <script setup>
 import { ref, computed, onMounted } from 'vue'

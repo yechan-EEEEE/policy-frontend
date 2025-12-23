@@ -129,7 +129,7 @@ const recommendedPolicies = computed(() => {
 
   list.sort(
     (a, b) =>
-      (b.like_count ?? 0) - (a.like_count ?? 0)
+      (b.liked_count ?? 0) - (a.liked_count ?? 0)
   )
 
   return list.slice(0, 4)

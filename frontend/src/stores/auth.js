@@ -5,6 +5,7 @@ export const useAuthStore = defineStore('auth', {
   state: () => ({
     isLogin: false,
     user: null,
+    isFetched: false,
   }),
 
   actions: {
@@ -40,10 +41,18 @@ export const useAuthStore = defineStore('auth', {
         const res = await api.get('/accounts/profile/')
         this.user = res.data
         this.isLogin = true
-      } catch (err) {
+      } catch {
         this.user = null
         this.isLogin = false
+      } finally {
+        this.isFetched = true // 🔥 중요
       }
+    },
+
+    // 회원 탈퇴
+    async clearAuth() {
+      this.user = null
+      this.isLogin = false
     },
   },
 })

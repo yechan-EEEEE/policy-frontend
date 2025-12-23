@@ -19,7 +19,7 @@
           :class="{ active: onlyMatched }"
           @click="toggleMatched"
         >
-          🎯 내 조건에 맞는 정책
+          🎯 나이 기준에 맞는 정책
         </button>
 
         <button
@@ -34,7 +34,7 @@
           v-if="onlyMatched && auth.isLogin"
           class="filter-desc"
         >
-          나이 {{ auth.user.age }},
+          나이 {{ userAge ?? '-' }},
           지역 {{ auth.user.region }} 기준
         </span>
 
@@ -232,8 +232,12 @@ onMounted(() => {
   policyStore.fetchPolicies()
 })
 
-
 const policies = computed(() => policyStore.policies)
+const userAge = computed(() => {
+  if (!auth.user?.birth_date) return null
+  const birthYear = new Date(auth.user.birth_date).getFullYear()
+  return new Date().getFullYear() - birthYear + 1
+})
 
 // 대분류
 const mainCategories = computed(() => {
@@ -273,10 +277,19 @@ const filteredPolicies = computed(() => {
     }
 
     if (onlyMatched.value && auth.isLogin) {
-      const age = auth.user.age // (이 부분은 이전에 userAge로 바꾸는게 더 안전)
-      const min = Number(p.sprtTrgtMinAge)
-      const max = Number(p.sprtTrgtMaxAge)
-      if ((min && age < min) || (max && age > max)) return false
+      const age = userAge.value
+      if (!age) return true
+
+      const minRaw = p.sprtTrgtMinAge
+      const maxRaw = p.sprtTrgtMaxAge
+      const min = parseInt(minRaw, 10)
+      const max = parseInt(maxRaw, 10)
+      const noAgeLimit = (!minRaw && !maxRaw) || (min === 0 && max === 0)
+
+      if (noAgeLimit) return true
+
+      if (Number.isFinite(min) && age < min) return false
+      if (Number.isFinite(max) && age > max) return false
     }
 
     return true

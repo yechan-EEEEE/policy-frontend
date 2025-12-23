@@ -29,10 +29,15 @@ class PolicyListSerializer(serializers.ModelSerializer):
         fields = [
             'plcyNo',
             'plcyNm',
+            'plcyExplnCn',
             'lclsfNm',
             'mclsfNm',
+            'bizPrdEndYmd',
+            'sprtTrgtMinAge',
+            'sprtTrgtMaxAge',
             'thread_count',
             'liked_count',
+            'is_liked',
         ]
 
     def get_is_liked(self, obj):

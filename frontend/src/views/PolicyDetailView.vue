@@ -170,6 +170,154 @@ const goPolicyThreads = (plcyNo) => {
 </script>
 
 <style scoped>
+.policy-detail-page {
+  background: #f8fafc;
+  min-height: calc(100vh - 64px);
+  padding: 40px 0;
+}
+
+.container {
+  max-width: 900px;
+  margin: 0 auto;
+  padding: 0 20px;
+}
+
+/* 카드 공통 */
+.card {
+  background: #fff;
+  border-radius: 12px;
+  padding: 28px;
+  margin-bottom: 24px;
+  box-shadow: 0 8px 20px rgba(0, 0, 0, 0.04);
+}
+
+/* 헤더 */
+.header-card .badge {
+  display: inline-block;
+  background: #e0f2fe;
+  color: #0284c7;
+  padding: 6px 12px;
+  border-radius: 999px;
+  font-size: 13px;
+  margin-bottom: 12px;
+}
+
+.title {
+  font-size: 28px;
+  font-weight: 700;
+  margin-bottom: 12px;
+}
+
+.desc {
+  color: #4b5563;
+  line-height: 1.6;
+}
+
+/* 정보 그리드 */
+.info-grid {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 16px;
+}
+
+.info-item {
+  background: #f9fafb;
+  padding: 16px;
+  border-radius: 8px;
+}
+
+.info-item strong {
+  display: block;
+  font-size: 13px;
+  color: #6b7280;
+  margin-bottom: 4px;
+}
+
+/* 섹션 제목 */
+.section-title {
+  font-size: 18px;
+  font-weight: 600;
+  margin-bottom: 12px;
+}
+
+/* 지원 내용 */
+.support-text {
+  white-space: pre-wrap;
+  line-height: 1.6;
+  color: #374151;
+  font-family: inherit;
+}
+
+/* 액션 */
+.policy-actions {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  margin-top: 16px;
+}
+
+.like-btn, .thread-count {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 20px;
+  padding: 6px 14px;
+  font-size: 14px;
+  line-height: 1; /* 🔥 baseline 문제 차단 */
+}
+
+.like-btn {
+  background: #f3f4f6;
+  border: none;
+  cursor: pointer;
+}
+
+.like-btn.liked {
+  background: #fde68a;
+  color: #92400e;
+}
+
+.thread-count {
+  background: #68c2e6ad;
+  border: none;
+  color: #4e535e;
+  cursor: pointer;
+}
+
+.actions {
+  display: flex;
+  justify-content: flex-end;
+  margin-top: 24px;
+}
+
+.primary {
+  background: #2563eb;
+  color: #fff;
+  padding: 12px 20px;
+  border-radius: 8px;
+  border: none;
+  cursor: pointer;
+}
+
+.primary:hover {
+  background: #1d4ed8;
+}
+
+.disabled {
+  background: #9ca3af;
+  color: #fff;
+  padding: 12px 20px;
+  border-radius: 8px;
+  border: none;
+}
+
+/* 로딩 */
+.loading {
+  padding: 80px;
+  text-align: center;
+  color: #6b7280;
+}
+
 .ai-summary {
   background: #f8fafc;
 }
@@ -206,4 +354,13 @@ const goPolicyThreads = (plcyNo) => {
   font-size: 14px;
   color: #9ca3af;
 }
+
+/* 반응형 */
+@media (max-width: 768px) {
+  .info-grid { grid-template-columns: 1fr; }
+}
+
 </style>
+<!-- <style scoped>
+
+</style> -->

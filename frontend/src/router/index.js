@@ -39,22 +39,23 @@ const router = createRouter({
 router.beforeEach(async (to) => {
   const auth = useAuthStore()
 
-  // 로그인 페이지, 회원가입 페이지에서는 fetchUser 호출 ❌
-  if (to.name === 'login' || to.name === 'signup') {
-    return true
+  /**
+   * 1️⃣ 로그인 상태 복구 (새로고침 대응)
+   */
+  if (!auth.isLogin && !auth.isFetched) {
+    try {
+      await auth.fetchUser()
+    } catch {
+      auth.clearAuth()
+    }
   }
 
-  // 이미 로그인 상태면 다시 호출 ❌
-  if (auth.isLogin) {
-    return true
-  }
-
-  // 그 외에만 한 번 시도
-  try {
-    await auth.fetchUser()
-  } catch {
-    // 로그인 안 된 상태면 그냥 통과
-    auth.logout()
+  /**
+   * 2️⃣ 인증이 필요한 페이지 접근 차단
+   */
+  if (to.meta.requiresAuth && !auth.isLogin) {
+    alert('로그인이 필요합니다.')
+    return { name: 'login' }
   }
 
   return true

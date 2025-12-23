@@ -35,7 +35,7 @@ def policy_list(request):
     if category:
         policies = policies.filter(lclsfNm=category)
         
-    serializer = PolicySerializer(
+    serializer = PolicyListSerializer(
         policies,
         many=True,
         context={'request': request}
