@@ -21,7 +21,7 @@ const router = createRouter({
     { path: '/', name: 'home', component: HomeView },
 
     { path: '/policies', name: 'policies', component: PoliciesListView },
-    { path: '/policies/:policyId', name: 'policyDetail', component: PolicyDetailView },
+    { path: '/policies/:plcyNo', name: 'policyDetail', component: PolicyDetailView },
 
     { path: '/signup', name: 'signup', component: SignupView, meta: { guestOnly: true } },
     { path: '/login', name: 'login', component: LoginView, meta: { guestOnly: true } },
@@ -30,7 +30,7 @@ const router = createRouter({
     { path: '/mypage/edit', name: 'mypageEdit', component: MyPageEditView, meta: { requiresAuth: true } },
 
     { path: '/threads', name: 'threads', component: ThreadsListView },
-    { path: '/threads/:policyId/write', name: 'threadWrite', component: ThreadWriteView, meta: { requiresAuth: true } },
+    { path: '/threads/:plcyNo/write', name: 'threadWrite', component: ThreadWriteView, meta: { requiresAuth: true } },
     { path: '/threads/:threadId', name: 'threadDetail', component: ThreadDetailView },
     { path: '/threads/:threadId/edit', name: 'threadEdit', component: ThreadEditView, meta: { requiresAuth: true } },
   ],

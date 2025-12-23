@@ -67,25 +67,34 @@
 </template>
 
 <script setup>
-import { onMounted, computed } from 'vue'
+import { watch, computed } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 import { usePolicyStore } from '@/stores/policy'
+import { useThreadStore } from '@/stores/thread'
 import { useAuthStore } from '@/stores/auth'
 import AppNavbar from '@/components/common/AppNavbar.vue'
 
 const route = useRoute()
 const router = useRouter()
-const policyStore = usePolicyStore()
-const auth = useAuthStore()
 
-onMounted(() => {
-  policyStore.fetchPolicyDetail(route.params.policyId)
-})
+const policyStore = usePolicyStore()
+const threadStore = useThreadStore()
+const auth = useAuthStore()
 
 const policy = computed(() => policyStore.policyDetail)
 
+watch(
+  () => route.params.plcyNo,
+  (plcyNo) => {
+    if (!plcyNo) return
+    policyStore.fetchPolicyDetail(plcyNo)
+    threadStore.fetchThreadsByPolicy(plcyNo)
+  },
+  { immediate: true }
+)
+
 const goWrite = () => {
-  router.push(`/threads/${route.params.policyId}/write`)
+  router.push(`/threads/${route.params.plcyNo}/write`)
 }
 </script>
 
