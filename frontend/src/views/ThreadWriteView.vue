@@ -5,27 +5,12 @@
     <section class="thread-write-container">
       <h1 class="page-title">게시글 작성</h1>
 
-      <form @submit.prevent="submitThread">
-        <!-- 정책 선택 -->
-        <div class="form-group">
-          <label>관련 정책</label>
-          <select v-model="selectedPolicyPk" required>
-            <option value="">정책을 선택하세요</option>
-            <option
-              v-for="p in policies"
-              :key="p.pk"
-              :value="p.pk"
-            >
-              {{ p.title }}
-            </option>
-          </select>
+      <!-- ✅ 정책 이름 표시 -->
+      <p class="policy-info" v-if="policy">
+        관련 정책: <strong>{{ policy.plcyNm }}</strong>
+      </p>
 
-          <!-- 선택된 정책 분류 표시 -->
-          <p v-if="selectedPolicy" class="policy-meta">
-            {{ selectedPolicy.category }} / {{ selectedPolicy.subTitle }}
-          </p>
-        </div>
-
+      <form @submit.prevent="submit">
         <!-- 제목 -->
         <div class="form-group">
           <label>제목</label>
@@ -46,32 +31,39 @@
           />
         </div>
 
-        <button
-          class="primary"
-          :disabled="loading"
-          @click="submit"
-        >
+        <button class="primary" :disabled="loading">
           {{ loading ? '작성 중...' : '등록하기' }}
         </button>
-
       </form>
     </section>
   </main>
 </template>
 
 <script setup>
-import { ref } from 'vue'
+import { ref, computed, onMounted } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 import { useThreadStore } from '@/stores/thread'
+import { usePolicyStore } from '@/stores/policy'
 import AppNavbar from '@/components/common/AppNavbar.vue'
 
 const route = useRoute()
 const router = useRouter()
+
 const threadStore = useThreadStore()
+const policyStore = usePolicyStore()
+
+const plcyNo = route.params.plcyNo
 
 const title = ref('')
 const content = ref('')
 const loading = ref(false)
+
+// ✅ 정책 상세 가져오기
+onMounted(() => {
+  policyStore.fetchPolicyDetail(plcyNo)
+})
+
+const policy = computed(() => policyStore.policyDetail)
 
 const submit = async () => {
   if (!title.value || !content.value) return
@@ -81,19 +73,19 @@ const submit = async () => {
     await threadStore.createThread({
       title: title.value,
       content: content.value,
-      policy: route.params.policyId, // === plcyNo
+      policy: plcyNo,
     })
 
-    // 작성 후 정책별 thread 목록으로 이동
-    router.push(`/threads?policyId=${route.params.policyId}`)
+    // 작성 후 정책 상세로 이동
+    router.push(`/policies/${plcyNo}`)
   } catch (err) {
+    console.error(err)
     alert('글 작성에 실패했습니다.')
   } finally {
     loading.value = false
   }
 }
 </script>
-
 
 <style scoped>
 .thread-write-page {

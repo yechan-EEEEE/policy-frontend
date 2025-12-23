@@ -146,9 +146,10 @@ const subCategories = computed(() => {
 /* 필터링 */
 const filteredThreads = computed(() => {
   return threads.value.filter(t => {
-    const policy = policyStore.getByPlcyNo?.(t.policy) // policy === plcyNo
+    const policy = policyStore.getByPlcyNo?.(t.policy)
 
-    if (!policy) return false
+    // 🔥 정책 아직 로딩 안 됐으면 그냥 보여줌
+    if (!policyStore.isLoaded) return threads.value
 
     if (selectedCategory.value && policy.lclsfNm !== selectedCategory.value) {
       return false
@@ -169,6 +170,7 @@ const filteredThreads = computed(() => {
     return true
   })
 })
+
 
 const selectCategory = (cat) => {
   selectedCategory.value = cat

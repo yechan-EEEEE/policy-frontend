@@ -51,26 +51,25 @@ const auth = useAuthStore()
 const username = ref('')
 const password = ref('')
 
-const submitLogin = () => {
+const submitLogin = async () => {
   if (!username.value.trim() || !password.value.trim()) {
     alert('아이디와 비밀번호를 입력해주세요.')
     return
   }
 
-  // 🔥 Mock 로그인 (임시)
-  auth.login({
-    user: {
+  try {
+    await auth.login({
       username: username.value,
-      age: 27,
-      region: '경기도',
-      job: '취업준비생',
-      gender: 'M'
-    },
-    token: 'mock-token'
-  })
+      password: password.value,
+    })
 
-  router.push('/')
+    router.push('/')
+  } catch (err) {
+    console.error(err)
+    alert('로그인에 실패했습니다.')
+  }
 }
+
 
 
 const goSignup = () => {
