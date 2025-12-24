@@ -6,7 +6,7 @@
       <h1 class="thread-title">{{ thread.title }}</h1>
 
       <div class="thread-meta">
-        <span>✍ {{ thread.author_username || thread.author }}</span>
+        <span>✍ {{ thread.author_username ?? '알 수 없음' }}</span>
         <span>·</span>
         <span>{{ formatDate(thread.created_at) }}</span>
       </div>
@@ -28,7 +28,7 @@
         <button @click="goBack">목록으로</button>
 
         <button
-          v-if="auth.user?.id === thread.author"
+          v-if="auth.user?.username === thread.author_username"
           @click="goEdit"
         >
           수정
@@ -187,9 +187,7 @@ const toggleLike = async () => {
   }
 
   try {
-    const res = await threadStore.toggleLike(thread.value.id)
-
-    // ✅ 서버 응답 그대로 반영
+    const res = await threadStore.toggleLike(route.params.threadId)
     thread.value.is_liked = res.is_liked
     thread.value.liked_count = res.liked_count
   } catch {

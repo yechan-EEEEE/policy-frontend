@@ -7,9 +7,8 @@
 
       <div class="thread-actions">
         <button
-          v-if="false"
+          v-if="auth.isLogin"
           class="write-btn"
-          :disabled="!auth.isLogin"
           @click="goWrite"
         >
           ✏️ 게시글 작성
@@ -41,9 +40,7 @@
           <h3 class="card-title">{{ thread.title }}</h3>
 
           <div class="card-meta">
-            <span>👁 {{ thread.view_count }}</span>
-            <span>❤️ {{ thread.liked_count }}</span>
-            <span>💬 {{ thread.comment_count ?? 0 }}</span>
+            <span>❤️ {{ thread.liked_count ?? 0 }}</span>
           </div>
         </div>
 
@@ -122,7 +119,11 @@ const ITEMS_PER_PAGE = 10
 const PAGES_PER_GROUP = 10
 
 const goWrite = () => {
-  router.push('/threads/write')
+  if (!route.query.policyId) {
+    alert('정책을 선택한 후 글을 작성해주세요.')
+    return
+  }
+  router.push(`/threads/${route.query.policyId}/write`)
 }
 
 /* 🔍 검색어 */

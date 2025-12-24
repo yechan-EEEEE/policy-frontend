@@ -86,10 +86,8 @@ const submit = async () => {
     await threadStore.createThread({
       title: title.value,
       content: content.value,
-      policy: plcyNo,
     })
 
-    // 작성 후 정책 상세로 이동
     router.push(`/policies/${plcyNo}`)
   } catch (err) {
     console.error(err)
@@ -101,12 +99,12 @@ const submit = async () => {
 </script>
 
 <style scoped>
-.thread-write-page {
+.thread-edit-page {
   min-height: 100vh;
   background: #f8fafc;
 }
 
-.thread-write-container {
+.thread-edit-card {
   max-width: 900px;
   margin: 0 auto;
   padding: 32px 24px;

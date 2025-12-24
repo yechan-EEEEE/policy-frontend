@@ -21,11 +21,8 @@ export const useAuthStore = defineStore('auth', {
 
     // 로그인
     async login(credentials) {
-      const res = await api.post('/accounts/login/', credentials)
-
-      // 백엔드가 user 정보를 내려준다고 가정
-      this.user = res.data
-      this.isLogin = true
+      await api.post('/accounts/login/', credentials)
+      await this.fetchUser()
     },
 
     // 로그아웃

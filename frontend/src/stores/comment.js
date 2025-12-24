@@ -7,50 +7,39 @@ export const useCommentStore = defineStore('comment', {
   }),
 
   actions: {
-    // 댓글 목록 조회
-    async fetchComments(threadId) {
-      const res = await api.get(`/community/threads/${threadId}/comments/`)
+    async fetchComments(postId) {
+      const res = await api.get(`/community/posts/${postId}/comments/`)
       this.comments = res.data
     },
 
-    // 댓글 작성
-    async createComment(threadId, content) {
+    async createComment(postId, content) {
       const res = await api.post(
-        `/community/threads/${threadId}/comments/`,
+        `/community/posts/${postId}/comments/`,
         { content }
       )
       this.comments.unshift(res.data)
     },
 
-    // 댓글 수정
     async updateComment(commentId, content) {
-        const res = await api.put(
-            `/community/comments/${commentId}/`,
-            { content }
-        )
-
-        const idx = this.comments.findIndex(c => c.id === commentId)
-        if (idx !== -1) {
-            this.comments[idx] = res.data
-        }
+      const res = await api.put(
+        `/community/comments/${commentId}/`,
+        { content }
+      )
+      const idx = this.comments.findIndex(c => c.id === commentId)
+      if (idx !== -1) this.comments[idx] = res.data
     },
 
-    // 댓글 삭제
     async deleteComment(commentId) {
       await api.delete(`/community/comments/${commentId}/`)
       this.comments = this.comments.filter(c => c.id !== commentId)
     },
 
-    // 댓글 좋아요 토글
     async toggleLike(commentId) {
-      const res = await api.post(
-        `/community/comments/${commentId}/like/`
-      )
-
-      const comment = this.comments.find(c => c.id === commentId)
-      if (comment) {
-        comment.is_liked = res.data.is_liked
-        comment.liked_count += res.data.is_liked ? 1 : -1
+      const res = await api.post(`/community/comments/${commentId}/like/`)
+      const c = this.comments.find(c => c.id === commentId)
+      if (c) {
+        c.is_liked = res.data.is_liked
+        c.liked_count += res.data.is_liked ? 1 : -1
       }
     },
   },

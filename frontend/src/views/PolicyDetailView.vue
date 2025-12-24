@@ -1,3 +1,4 @@
+--- PolicyDetailView.vue ---
 <template>
   <AppNavbar />
 
@@ -361,6 +362,3 @@ const goPolicyThreads = (plcyNo) => {
 }
 
 </style>
-<!-- <style scoped>
-
-</style> -->

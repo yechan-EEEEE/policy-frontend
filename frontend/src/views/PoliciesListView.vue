@@ -122,10 +122,6 @@
             <span class="like">
               ⭐ {{ policy.liked_count ?? 0 }}
             </span>
-
-            <span class="threads">
-              💬 {{ policy.thread_count ?? 0 }}
-            </span>
           </div>
         </div>
 
@@ -260,14 +256,6 @@ const subCategories = computed(() => {
 // 필터링
 const filteredPolicies = computed(() => {
   return policies.value.filter(p => {
-    // ✅ 신청기간 지난 정책 숨기기
-    if (hideExpired.value && isExpired(p.bizPrdEndYmd)) {
-      return false
-    }
-
-    if (selectedCategory.value && p.lclsfNm !== selectedCategory.value) return false
-    if (selectedSubCategory.value && p.mclsfNm !== selectedSubCategory.value) return false
-
     if (
       keyword.value &&
       !p.plcyNm.includes(keyword.value) &&
@@ -276,25 +264,17 @@ const filteredPolicies = computed(() => {
       return false
     }
 
-    if (onlyMatched.value && auth.isLogin) {
-      const age = userAge.value
-      if (!age) return true
+    if (selectedCategory.value && p.lclsfNm !== selectedCategory.value) return false
+    if (selectedSubCategory.value && p.mclsfNm !== selectedSubCategory.value) return false
 
-      const minRaw = p.sprtTrgtMinAge
-      const maxRaw = p.sprtTrgtMaxAge
-      const min = parseInt(minRaw, 10)
-      const max = parseInt(maxRaw, 10)
-      const noAgeLimit = (!minRaw && !maxRaw) || (min === 0 && max === 0)
-
-      if (noAgeLimit) return true
-
-      if (Number.isFinite(min) && age < min) return false
-      if (Number.isFinite(max) && age > max) return false
-    }
+    // 🚧 서버 필드 미제공 → 임시 통과
+    if (onlyMatched.value && auth.isLogin) return true
+    if (hideExpired.value) return true
 
     return true
   })
 })
+
 
 const isExpired = (endYmd) => {
   if (!endYmd) return false
