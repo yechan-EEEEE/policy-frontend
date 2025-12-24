@@ -14,12 +14,8 @@
 
       <!-- 맞춤 필터 -->
       <div class="custom-filter">
-        <button
-          class="filter-chip"
-          :class="{ active: onlyMatched }"
-          @click="toggleMatched"
-        >
-          🎯 나이 기준에 맞는 정책
+        <button class="filter-chip" :class="{ active: onlyMatched }">
+          🎯 {{ userAge ? `${userAge}세 기준 정책` : '나이 기준 정책' }}
         </button>
 
         <button
@@ -30,12 +26,8 @@
           ⏰ 사업기간 지난 정책 숨기기
         </button>
 
-        <span
-          v-if="onlyMatched && auth.isLogin"
-          class="filter-desc"
-        >
-          나이 {{ userAge ?? '-' }},
-          지역 {{ auth.user.region }} 기준
+        <span v-if="onlyMatched && auth.isLogin" class="filter-desc">
+          나이 {{ userAge }}세 · 지원 연령 조건 충족 정책
         </span>
 
         <div
@@ -234,6 +226,17 @@ const userAge = computed(() => {
   const birthYear = new Date(auth.user.birth_date).getFullYear()
   return new Date().getFullYear() - birthYear + 1
 })
+const isAgeMatched = (policy) => {
+  if (!userAge.value) return true
+
+  const min = policy.sprtTrgtMinAge
+  const max = policy.sprtTrgtMaxAge
+
+  if (min && userAge.value < min) return false
+  if (max && userAge.value > max) return false
+
+  return true
+}
 
 // 대분류
 const mainCategories = computed(() => {
@@ -295,6 +298,10 @@ const filteredPolicies = computed(() => {
       p.mclsfNm !== selectedSubCategory.value
     ) {
       return false
+    }
+
+    if (onlyMatched.value && auth.isLogin) {
+      if (!isAgeMatched(p)) return false
     }
 
     return true
