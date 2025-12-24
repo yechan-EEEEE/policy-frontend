@@ -250,7 +250,6 @@ const mainCategories = computed(() => {
   ]
 })
 
-
 // 소분류
 const subCategories = computed(() => {
   if (!selectedCategory.value) return []
@@ -269,7 +268,6 @@ const subCategories = computed(() => {
     ),
   ]
 })
-
 
 // 필터링
 const filteredPolicies = computed(() => {
@@ -537,11 +535,16 @@ hr {
   flex-direction: column;
   justify-content: space-between;
 
-  border: 1px solid #e5e7eb;
+  border: 1.5px solid #d1d5db;
   border-radius: 12px;
   padding: 20px;
   background: #ffffff;
   cursor: pointer;
+
+  transition: 
+    border-color 0.2s ease,
+    box-shadow 0.2s ease,
+    transform 0.2s ease;
 }
 
 .policy-card h3 {
@@ -571,8 +574,13 @@ hr {
 }
 
 .policy-card:hover {
+  border-color: #3b82f6;
   transform: translateY(-2px);
   box-shadow: 0 8px 24px rgba(0,0,0,0.08);
+}
+
+.policy-card:hover .card-title {
+  color: #2563eb;
 }
 
 .card-title {
