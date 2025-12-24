@@ -14,7 +14,11 @@
 
       <!-- 맞춤 필터 -->
       <div class="custom-filter">
-        <button class="filter-chip" :class="{ active: onlyMatched }">
+        <button
+          class="filter-chip"
+          :class="{ active: onlyMatched }"
+          @click="toggleMatched"
+        >
           🎯 {{ userAge ? `${userAge}세 기준 정책` : '나이 기준 정책' }}
         </button>
 
@@ -302,6 +306,10 @@ const filteredPolicies = computed(() => {
 
     if (onlyMatched.value && auth.isLogin) {
       if (!isAgeMatched(p)) return false
+    }
+
+    if (hideExpired.value && isExpired(p.bizPrdEndYmd)) {
+      return false
     }
 
     return true
