@@ -38,7 +38,7 @@ export const usePolicyStore = defineStore('policy', {
   actions: {
     /** 정책 목록 조회 */
     async fetchPolicies(params = {}) {
-      const res = await api.get('/policies/', { params })
+      const res = await api.get('/policies/list/', { params })
       this.policies = res.data
       this.isLoaded = true
     },
