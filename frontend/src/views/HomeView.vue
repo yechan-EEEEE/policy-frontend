@@ -6,10 +6,9 @@
 
     <!-- 로그인 상태 -->
     <section v-if="auth.isLogin">
-      <h1>{{ auth.user.username }}님에게 맞는 정책을 찾아보세요</h1>
+      <h1>{{ auth.user.username }}님을 위한 추천 정책</h1>
       <p class="sub">
-        나이: {{ userAge ?? '-' }}, 지역: {{ auth.user.region }} 기준으로
-        맞춤 정책을 추천해드립니다.
+        AI 추천 · 나이 {{ userAge ?? '-' }}세 기준 · 관심도 높은 정책
       </p>
     </section>
 
