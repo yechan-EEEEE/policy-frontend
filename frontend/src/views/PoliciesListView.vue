@@ -237,21 +237,39 @@ const userAge = computed(() => {
 
 // 대분류
 const mainCategories = computed(() => {
-  return [...new Set(policies.value.map(p => p.lclsfNm).filter(Boolean))]
+  return [
+    ...new Set(
+      policies.value
+        .flatMap(p =>
+          p.lclsfNm
+            ?.split(',')
+            .map(v => v.trim())
+        )
+        .filter(Boolean)
+    ),
+  ]
 })
+
 
 // 소분류
 const subCategories = computed(() => {
   if (!selectedCategory.value) return []
+
   return [
     ...new Set(
       policies.value
-        .filter(p => p.lclsfNm === selectedCategory.value)
+        .filter(p =>
+          p.lclsfNm
+            ?.split(',')
+            .map(v => v.trim())
+            .includes(selectedCategory.value)
+        )
         .map(p => p.mclsfNm)
         .filter(Boolean)
     ),
   ]
 })
+
 
 // 필터링
 const filteredPolicies = computed(() => {
@@ -264,17 +282,26 @@ const filteredPolicies = computed(() => {
       return false
     }
 
-    if (selectedCategory.value && p.lclsfNm !== selectedCategory.value) return false
-    if (selectedSubCategory.value && p.mclsfNm !== selectedSubCategory.value) return false
+    if (
+      selectedCategory.value &&
+      !p.lclsfNm
+        ?.split(',')
+        .map(v => v.trim())
+        .includes(selectedCategory.value)
+    ) {
+      return false
+    }
 
-    // 🚧 서버 필드 미제공 → 임시 통과
-    if (onlyMatched.value && auth.isLogin) return true
-    if (hideExpired.value) return true
+    if (
+      selectedSubCategory.value &&
+      p.mclsfNm !== selectedSubCategory.value
+    ) {
+      return false
+    }
 
     return true
   })
 })
-
 
 const isExpired = (endYmd) => {
   if (!endYmd) return false
