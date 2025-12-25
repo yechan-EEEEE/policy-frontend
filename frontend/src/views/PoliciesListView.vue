@@ -264,17 +264,24 @@ const subCategories = computed(() => {
   return [
     ...new Set(
       policies.value
+        // 대분류 포함 여부
         .filter(p =>
           p.lclsfNm
             ?.split(',')
             .map(v => v.trim())
             .includes(selectedCategory.value)
         )
-        .map(p => p.mclsfNm)
+        // 🔥 소분류도 split
+        .flatMap(p =>
+          p.mclsfNm
+            ?.split(',')
+            .map(v => v.trim())
+        )
         .filter(Boolean)
     ),
   ]
 })
+
 
 // 필터링
 const filteredPolicies = computed(() => {
@@ -299,7 +306,10 @@ const filteredPolicies = computed(() => {
 
     if (
       selectedSubCategory.value &&
-      p.mclsfNm !== selectedSubCategory.value
+      !p.mclsfNm
+        ?.split(',')
+        .map(v => v.trim())
+        .includes(selectedSubCategory.value)
     ) {
       return false
     }
