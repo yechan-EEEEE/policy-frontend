@@ -10,15 +10,14 @@ import google.generativeai as genai
 from django.conf import settings
 from django.db import models
 from datetime import datetime
-from django.db.models import Count
+from .gemini_fewshot import summarize_policy_fewshot
+from .gemini_rag import generate_rag_answer
 # Create your views here.
 
 @api_view(['GET'])
 @permission_classes([AllowAny])
 def policy_list(request):
-    policies = Policy.objects.annotate(
-        thread_count=Count('threads', distinct=True)
-    )
+    policies = Policy.objects.all()
     
     # 검색어 필터
     search  = request.query_params.get('search', None)
@@ -35,11 +34,7 @@ def policy_list(request):
     if category:
         policies = policies.filter(lclsfNm=category)
         
-    serializer = PolicyListSerializer(
-        policies,
-        many=True,
-        context={'request': request}
-    )
+    serializer = PolicyListSerializer(policies, many=True)
     return Response(serializer.data)
 
 @api_view(['GET'])
@@ -52,20 +47,21 @@ def policy_detail(request, plcyNo):
 @api_view(['POST'])
 @permission_classes([IsAuthenticated])
 def policy_like(request, plcyNo):
-    policy = get_object_or_404(Policy, pk=plcyNo)
+    policy = get_object_or_404(Policy, plcyNo=plcyNo)
     user = request.user
-
+    
     if policy.liked_users.filter(id=user.id).exists():
         policy.liked_users.remove(user)
-        liked = False
+        return Response(
+            {'message': '좋아요가 취소되었습니다', 'is_liked': False},
+            status=status.HTTP_200_OK
+        )
     else:
         policy.liked_users.add(user)
-        liked = True
-
-    return Response({
-        'is_liked': liked,
-        'liked_count': policy.liked_users.count()
-    })
+        return Response(
+            {'message': '좋아요가 추가되었습니다', 'is_likes': True},
+            status=status.HTTP_201_CREATED
+        )
         
 @api_view(['GET'])
 @permission_classes([IsAuthenticated])
@@ -156,46 +152,63 @@ def fetch_policies(request):
             status=status.HTTP_500_INTERNAL_SERVER_ERROR
         )
         
-@api_view(['GET'])   # ✅ GET으로 변경
+
+@api_view(['POST'])
 @permission_classes([AllowAny])
 def policy_summarize(request, plcyNo):
+    """Few-shot prompting을 사용한 정책 요약"""
+    policy = get_object_or_404(Policy, plcyNo=plcyNo)
+    
     try:
-        policy = get_object_or_404(Policy, plcyNo=plcyNo)
-
-        genai.configure(api_key=settings.GEMINI_API_KEY)
-        model = genai.GenerativeModel('gemini-1.5-flash')  # ✅ 수정
-
-        sprt = policy.plcySprtCn or '정보 없음'
-        expln = policy.plcyExplnCn or '정보 없음'
-
-        prompt = f"""
-다음 청년 정책을 3~5줄로 요약해주세요.
-
-정책명: {policy.plcyNm}
-
-지원 내용:
-{sprt}
-
-상세 설명:
-{expln}
-
-아래 형식으로 작성해주세요:
-- 핵심 지원 내용
-- 신청 자격 요건
-- 주요 혜택
-"""
-
-        response = model.generate_content(prompt)
-
-        return Response({
-            'plcyNo': plcyNo,
-            'plcyNm': policy.plcyNm,
-            'summary': response.text
-        }, status=status.HTTP_200_OK)
-
+        # Few-shot 함수 호출
+        summary = summarize_policy_fewshot(
+            policy_name=policy.plcyNm,
+            policy_content=policy.plcySprtCn or policy.plcyExplnCn
+        )
+        
+        if summary:
+            return Response({
+                'plcyNo': plcyNo,
+                'plcyNm': policy.plcyNm,
+                'summary': summary
+            }, status=status.HTTP_200_OK)
+        else:
+            return Response(
+                {'error': '요약 생성에 실패했습니다.'},
+                status=status.HTTP_500_INTERNAL_SERVER_ERROR
+            )
+        
     except Exception as e:
-        print('🔥 AI SUMMARY ERROR:', e)
         return Response(
-            {'error': '요약 생성 중 오류가 발생했습니다.'},
+            {'error': f'요약 생성 중 오류가 발생했습니다: {str(e)}'},
+            status=status.HTTP_500_INTERNAL_SERVER_ERROR
+        )
+
+@api_view(['POST'])
+@permission_classes([AllowAny])
+def policy_chatbot(request):
+    """RAG 기반 정책 챗봇"""
+    
+    user_message = request.data.get('message', '').strip()
+    
+    if not user_message:
+        return Response(
+            {'error': '질문을 입력해주세요.'},
+            status=status.HTTP_400_BAD_REQUEST
+        )
+    
+    try:
+        # RAG 답변 생성
+        result = generate_rag_answer(user_message)
+        
+        return Response({
+            'question': user_message,
+            'answer': result['answer'],
+            'related_policies': result['policies']
+        }, status=status.HTTP_200_OK)
+        
+    except Exception as e:
+        return Response(
+            {'error': f'답변 생성 중 오류가 발생했습니다: {str(e)}'},
             status=status.HTTP_500_INTERNAL_SERVER_ERROR
         )

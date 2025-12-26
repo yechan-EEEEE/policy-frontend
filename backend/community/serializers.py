@@ -1,7 +1,6 @@
 from rest_framework import serializers
 from django.contrib.auth import get_user_model
 from .models import Post, Comment
-from policies.models import Policy
 
 User = get_user_model()
 
@@ -36,10 +35,6 @@ class PostListSerializer(serializers.ModelSerializer):
 
 
 class PostSerializer(serializers.ModelSerializer):
-    policy = serializers.PrimaryKeyRelatedField(
-        queryset=Policy.objects.all()
-    )
-
     author_username = serializers.CharField(source='author.username', read_only=True)
     comment_count = serializers.IntegerField(source='comments.count', read_only=True)
     liked_count = serializers.IntegerField(source='liked_users.count', read_only=True)
@@ -47,20 +42,8 @@ class PostSerializer(serializers.ModelSerializer):
     
     class Meta:
         model = Post
-        fields = ['id',
-                  'policy',
-                  'title',
-                  'content',
-                  'image',
-                  'author',
-                  'author_username',
-                  'created_at',
-                  'updated_at',
-                  'view_count',
-                  'comment_count',
-                  'liked_count',
-                  'is_liked',
-        ]
+        fields = ['id', 'title', 'content', 'image', 'author', 'author_username', 
+                  'created_at', 'updated_at', 'view_count', 'comment_count', 'liked_count', 'is_liked']
         read_only_fields = ['id', 'author', 'created_at', 'updated_at', 'view_count']
     
     def get_is_liked(self, obj):
@@ -71,35 +54,17 @@ class PostSerializer(serializers.ModelSerializer):
 
 
 class PostDetailSerializer(serializers.ModelSerializer):
-    like_count = serializers.IntegerField(
-        source='liked_users.count',
-        read_only=True
-    )
-    comment_count = serializers.IntegerField(
-        source='comments.count',
-        read_only=True
-    )
+    author_username = serializers.CharField(source='author.username', read_only=True)
+    comments = CommentSerializer(many=True, read_only=True)
+    liked_count = serializers.IntegerField(source='liked_users.count', read_only=True)
     is_liked = serializers.SerializerMethodField()
-    author_username = serializers.CharField(
-        source='author.username',
-        read_only=True
-    )
-
+    
     class Meta:
         model = Post
-        fields = [
-            'id',
-            'title',
-            'content',
-            'author',
-            'author_username',
-            'created_at',
-            'view_count',
-            'like_count',
-            'comment_count',
-            'is_liked',
-        ]
-
+        fields = ['id', 'title', 'content', 'author', 'author_username', 
+                  'created_at', 'updated_at', 'view_count', 'comments', 'liked_count', 'is_liked']
+        read_only_fields = ['id', 'author', 'created_at', 'updated_at', 'view_count']
+    
     def get_is_liked(self, obj):
         request = self.context.get('request')
         if request and request.user.is_authenticated:

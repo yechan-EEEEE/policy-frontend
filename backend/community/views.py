@@ -5,7 +5,6 @@ from rest_framework.permissions import IsAuthenticated, AllowAny
 from django.shortcuts import get_object_or_404
 from django.db import models
 from .models import Post, Comment
-from django.db.models import Count
 from .serializers import (
     PostListSerializer, PostSerializer, PostDetailSerializer,
     CommentSerializer
@@ -13,49 +12,40 @@ from .serializers import (
 
 @api_view(['GET', 'POST'])
 @permission_classes([AllowAny])
-def thread_list(request):
+def post_list(request):
     if request.method == 'GET':
-        posts = Post.objects.annotate(
-            like_count=Count('liked_users', distinct=True),
-            comment_count=Count('comments', distinct=True),
-        )
-
-        # 🔍 검색
-        search = request.query_params.get('search')
+        posts = Post.objects.all()
+        
+        search = request.query_params.get('search', None)
         if search:
             posts = posts.filter(title__icontains=search)
-
-        # 🔥 정렬
+        
         ordering = request.query_params.get('ordering', '-created_at')
         if ordering == 'popular':
-            posts = posts.order_by('-like_count', '-created_at')
+            posts = posts.annotate(
+                like_count=models.Count('liked_users')
+            ).order_by('-like_count', '-created_at')
         else:
             posts = posts.order_by('-created_at')
-
-        serializer = PostListSerializer(
-            posts,
-            many=True,
-            context={'request': request}
-        )
+        
+        serializer = PostListSerializer(posts, many=True)
         return Response(serializer.data)
-
+    
     elif request.method == 'POST':
         if not request.user.is_authenticated:
             return Response(
                 {'error': '로그인이 필요합니다.'},
                 status=status.HTTP_401_UNAUTHORIZED
             )
-
+        
         serializer = PostSerializer(data=request.data)
         if serializer.is_valid(raise_exception=True):
             serializer.save(author=request.user)
             return Response(serializer.data, status=status.HTTP_201_CREATED)
 
-
 @api_view(['GET', 'PUT', 'DELETE'])
-@permission_classes([AllowAny])
-def thread_detail(request, thread_pk):
-    post = get_object_or_404(Post, pk=thread_pk)
+def post_detail(request, post_pk):
+    post = get_object_or_404(Post, pk=post_pk)
     
     if request.method == 'GET':
         post.view_count += 1
@@ -103,32 +93,22 @@ def thread_detail(request, thread_pk):
 
 @api_view(['POST'])
 @permission_classes([IsAuthenticated])
-def thread_like(request, post_pk):
+def post_like(request, post_pk):
     post = get_object_or_404(Post, pk=post_pk)
     user = request.user
     
     if post.liked_users.filter(id=user.id).exists():
         post.liked_users.remove(user)
-        liked = False
+        return Response(
+            {'message': '좋아요가 취소되었습니다.', 'is_liked': False},
+            status=status.HTTP_200_OK
+        )
     else:
         post.liked_users.add(user)
-        liked = True
-
-    return Response(
-        {
-            'is_liked': liked,
-            'liked_count': post.liked_users.count(),
-        },
-        status=status.HTTP_200_OK
-    )
-
-
-@api_view(['GET'])
-@permission_classes([AllowAny])
-def thread_list_by_policy(request, plcyNo):
-    posts = Post.objects.filter(policy__plcyNo=plcyNo).order_by('-created_at')
-    serializer = PostListSerializer(posts, many=True)
-    return Response(serializer.data)
+        return Response(
+            {'message': '좋아요가 추가되었습니다.', 'is_liked': True},
+            status=status.HTTP_201_CREATED
+        )
 
 @api_view(['GET', 'POST'])
 def comment_list(request, post_pk):

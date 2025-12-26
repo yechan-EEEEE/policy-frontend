@@ -21,12 +21,6 @@ def signup(request):
             status=status.HTTP_201_CREATED
         )
 
-    return Response(
-        serializer.errors,
-        status=status.HTTP_400_BAD_REQUEST
-    )
-
-
 @api_view(['POST'])
 @permission_classes([AllowAny])
 def user_login(request):
@@ -62,25 +56,26 @@ def user_logout(request):
         status=status.HTTP_200_OK
     )
     
-@api_view(['GET', 'PUT', 'PATCH'])
+@api_view(['GET'])
 @permission_classes([IsAuthenticated])
 def user_profile(request):
-    if request.method == 'GET':
-        serializer = UserDetailSerializer(request.user)
-        return Response(serializer.data)
+    serializer = UserDetailSerializer(request.user)
+    return Response(serializer.data)
 
-    serializer = UserSerializer(
-        request.user,
-        data=request.data,
-        partial=True
-    )
+@api_view(['PUT', 'PATCH'])
+@permission_classes([IsAuthenticated])
+def user_update(request):
+    serializer = UserSerializer(request.user, data=request.data, partial=True)
     if serializer.is_valid(raise_exception=True):
         serializer.save()
         return Response(serializer.data)
-
     
 @api_view(['DELETE'])
 @permission_classes([IsAuthenticated])
 def user_delete(request):
-    request.user.delete()
-    return Response(status=status.HTTP_204_NO_CONTENT)
+    user = request.user
+    user.delete()
+    return Response(
+        {'messsage': '회원 탈퇴가 완료되었습니다.'},
+        status=status.HTTP_204_NO_CONTENT
+    )

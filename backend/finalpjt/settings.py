@@ -14,11 +14,11 @@ from pathlib import Path
 from dotenv import load_dotenv
 import os
 
-
+load_dotenv()
 
 # Build paths inside the project like this: BASE_DIR / 'subdir'.
 BASE_DIR = Path(__file__).resolve().parent.parent
-load_dotenv(BASE_DIR / '.env')
+
 
 # Quick-start development settings - unsuitable for production
 # See https://docs.djangoproject.com/en/5.2/howto/deployment/checklist/
@@ -27,7 +27,7 @@ load_dotenv(BASE_DIR / '.env')
 SECRET_KEY = 'django-insecure-ln_!zj^&4^wxefoxkqog+e+w)s@fm^+c#bknc8r*3c_9y$8^n3'
 
 # SECURITY WARNING: don't run with debug turned on in production!
-DEBUG = True
+DEBUG = False
 
 ALLOWED_HOSTS = ['54.180.121.2','43.201.38.152', 'localhost', '127.0.0.1']
 
@@ -61,12 +61,9 @@ MIDDLEWARE = [
     'django.middleware.clickjacking.XFrameOptionsMiddleware',
 ]
 
-CORS_ALLOW_CREDENTIALS = True
-
 CORS_ALLOWED_ORIGINS = [
     "http://localhost:5173",
     "http://127.0.0.1:5173",
-    "https://policy-frontend-two.vercel.app",
 ]
 
 REST_FRAMEWORK = {
@@ -156,12 +153,6 @@ MEDIA_ROOT = BASE_DIR / 'media'
 DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
 
 CSRF_TRUSTED_ORIGINS = [
-    "https://finalpjt.ddns.net",
-    "https://policy-frontend-two.vercel.app",
+	'http://43.201.38.152',
+	'http://43.201.38.152:8000',
 ]
-
-SESSION_COOKIE_SAMESITE = "None"
-SESSION_COOKIE_SECURE = True
-
-CSRF_COOKIE_SAMESITE = "None"
-CSRF_COOKIE_SECURE = True
